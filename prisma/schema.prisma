@@ -1,0 +1,931 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================================================================
+// AUTH (NextAuth Credentials + OAuth, email verification, 2FA, sessions)
+// =====================================================================
+
+model User {
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  emailVerified         DateTime?
+  username              String    @unique
+  passwordHash          String?
+  name                  String?
+  image                 String?
+  role                  Role      @default(USER)
+  twoFactorEnabled      Boolean   @default(false)
+  twoFactorSecret       String?
+  isSuspended           Boolean   @default(false)
+  suspendedReason       String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  accounts              Account[]
+  sessions              Session[]
+  profile               Profile?
+  verificationTokens    EmailVerificationToken[]
+  passwordResetTokens   PasswordResetToken[]
+  loginEvents           LoginEvent[]
+
+  sentFriendRequests     Friendship[]      @relation("FriendshipRequester")
+  receivedFriendRequests Friendship[]      @relation("FriendshipAddressee")
+  friendLists            FriendList[]
+  friendListEntries      FriendListEntry[]
+
+  posts     Post[]
+  comments  Comment[]
+  reactions Reaction[]
+  bookmarks Bookmark[]
+  reposts   Repost[]
+
+  conversationParticipants ConversationParticipant[]
+  messages                 Message[]
+
+  createdCommunities     Community[]             @relation("CommunityCreator")
+  communityMemberships   CommunityMember[]
+  communityAnnouncements CommunityAnnouncement[]
+
+  stories     Story[]
+  storyViews  StoryView[]
+
+  playlists      Playlist[]
+  articles       Article[]
+  createdEvents  Event[]     @relation("EventCreator")
+  eventRsvps     EventRsvp[]
+
+  membershipTiers          MembershipTier[] @relation("CreatorTiers")
+  subscriptionsAsSubscriber Subscription[]  @relation("SubscriberSubscriptions")
+  subscriptionsAsCreator    Subscription[]  @relation("CreatorSubscribers")
+  tipsSent                 Tip[]            @relation("TipsSent")
+  tipsReceived              Tip[]            @relation("TipsReceived")
+
+  reportsFiled   Report[]    @relation("ReportsFiled")
+  reportsResolved Report[]   @relation("ReportsResolved")
+  auditLogs      AuditLog[]
+
+  guestbookReceived     GuestbookEntry[] @relation("GuestbookReceived")
+  guestbookWritten      GuestbookEntry[] @relation("GuestbookWritten")
+  notifications         Notification[]   @relation("NotificationsReceived")
+  notificationsActed    Notification[]   @relation("NotificationsActed")
+  profileViewsReceived  ProfileView[]    @relation("ProfileViewsReceived")
+  profileViewsMade      ProfileView[]    @relation("ProfileViewsMade")
+  badges                UserBadge[]
+  commentReactions      CommentReaction[]
+  messageReactions      MessageReaction[]
+
+  albums                Album[]
+  photos                Photo[]
+
+  following             Follow[]    @relation("Following")
+  followers             Follow[]    @relation("Followers")
+  blocksMade            Block[]     @relation("BlocksMade")
+  blocksReceived        Block[]     @relation("BlocksReceived")
+  storyReactions        StoryReaction[]
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expires   DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LoginEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  success   Boolean
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// =====================================================================
+// FRIENDS (Phase 3 — requests + Top Friends 2.0 lists)
+// =====================================================================
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  BLOCKED
+}
+
+model Friendship {
+  id           String           @id @default(cuid())
+  requesterId  String
+  addresseeId  String
+  status       FriendshipStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
+  respondedAt  DateTime?
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+}
+
+model FriendList {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries FriendListEntry[]
+
+  @@unique([userId, name])
+}
+
+model FriendListEntry {
+  id           String   @id @default(cuid())
+  listId       String
+  friendUserId String
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  list       FriendList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  friendUser User       @relation(fields: [friendUserId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, friendUserId])
+}
+
+// =====================================================================
+// FEED (Phase 4 — posts, comments, reactions, reposts, bookmarks)
+// =====================================================================
+
+enum PostType {
+  TEXT
+  IMAGE
+  VIDEO
+  GIF
+  POLL
+  ARTICLE
+  MUSIC
+  EVENT
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  LAUGH
+  FIRE
+  WOW
+  SAD
+  ANGRY
+  CARE
+  CLAP
+}
+
+model Post {
+  id             String   @id @default(cuid())
+  authorId       String
+  communityId    String?
+  requiredTierId String?
+  type           PostType @default(TEXT)
+  isReel         Boolean  @default(false)
+  content        String?  @db.Text
+  images         String[] @default([])
+  videoUrl       String?
+  gifUrl         String?
+  pollOptions    Json?
+  pollVotes      Json?
+  expiresAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  author       User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  community    Community?      @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  requiredTier MembershipTier? @relation(fields: [requiredTierId], references: [id], onDelete: SetNull)
+  comments     Comment[]
+  reactions    Reaction[]
+  bookmarks    Bookmark[]
+  reposts      Repost[]
+
+  @@index([createdAt])
+  @@index([communityId, createdAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  parentId  String?
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post   Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies Comment[] @relation("CommentReplies")
+  reactions CommentReaction[]
+
+  @@index([postId])
+}
+
+model Reaction {
+  id        String       @id @default(cuid())
+  postId    String
+  userId    String
+  type      ReactionType
+  createdAt DateTime     @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+model Repost {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+// =====================================================================
+// MESSAGING (Phase 5 — DMs, group chats, real-time via Socket.io)
+// =====================================================================
+
+enum MessageAttachmentType {
+  IMAGE
+  FILE
+  VOICE
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  isGroup   Boolean  @default(false)
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String    @id @default(cuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime  @default(now())
+  lastReadAt     DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id              String                 @id @default(cuid())
+  conversationId  String
+  senderId        String
+  content         String?                @db.Text
+  attachmentUrl   String?
+  attachmentType  MessageAttachmentType?
+  createdAt       DateTime               @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reactions    MessageReaction[]
+
+  @@index([conversationId, createdAt])
+}
+
+// =====================================================================
+// COMMUNITIES (Phase 6 — Reddit + Discord style groups)
+// =====================================================================
+
+enum CommunityVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum CommunityRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+  OWNER
+}
+
+model Community {
+  id          String              @id @default(cuid())
+  slug        String              @unique
+  name        String
+  description String?             @db.Text
+  bannerImage String?
+  iconImage   String?
+  themeColor  String              @default("#7c3aed")
+  visibility  CommunityVisibility @default(PUBLIC)
+  createdById String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  createdBy     User                    @relation("CommunityCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  members       CommunityMember[]
+  announcements CommunityAnnouncement[]
+  posts         Post[]
+  events        Event[]
+}
+
+model CommunityMember {
+  id          String        @id @default(cuid())
+  communityId String
+  userId      String
+  role        CommunityRole @default(MEMBER)
+  points      Int           @default(0)
+  joinedAt    DateTime      @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+}
+
+model CommunityAnnouncement {
+  id          String   @id @default(cuid())
+  communityId String
+  authorId    String
+  content     String   @db.Text
+  createdAt   DateTime @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([communityId, createdAt])
+}
+
+// =====================================================================
+// PROFILE (Phase 2 — basic, non-drag-and-drop)
+// =====================================================================
+
+model Profile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  displayName     String?
+  bio             String?  @db.Text
+  location        String?
+  coverImage      String?
+  avatarImage     String?
+  backgroundImage String?
+  profileSongUrl  String?
+  profileSongTitle String?
+  themeColor      String   @default("#7c3aed")
+  theme           String   @default("midnight")
+  accentColor     String   @default("#7c3aed")
+  fontFamily      String   @default("sans")
+  mood            String?
+  moodEmoji       String?
+  headline        String?
+  profileViews    Int      @default(0)
+  interests       String[] @default([])
+  links           Json     @default("[]")
+  favoriteArtists String[] @default([])
+  cursorEffect    String?
+  glitter         Boolean  @default(false)
+  stickers        Json     @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// =====================================================================
+// STORIES (Phase 7 — 24h expiring photo/video/music/poll/question stories)
+// =====================================================================
+
+enum StoryType {
+  PHOTO
+  VIDEO
+  MUSIC
+  POLL
+  QUESTION
+}
+
+model Story {
+  id          String    @id @default(cuid())
+  authorId    String
+  type        StoryType
+  mediaUrl    String?
+  content     String?   @db.Text
+  pollOptions Json?
+  pollVotes   Json?
+  question    String?
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+
+  author User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  views  StoryView[]
+  reactions StoryReaction[]
+
+  @@index([authorId, expiresAt])
+}
+
+model StoryReaction {
+  id        String   @id @default(cuid())
+  storyId   String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, userId])
+  @@index([storyId])
+}
+
+model StoryView {
+  id       String   @id @default(cuid())
+  storyId  String
+  userId   String
+  viewedAt DateTime @default(now())
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, userId])
+}
+
+// =====================================================================
+// MUSIC (Phase 8 — favorite artists, playlists, listening activity)
+// =====================================================================
+
+model Playlist {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  coverImage  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tracks PlaylistTrack[]
+}
+
+model PlaylistTrack {
+  id          String   @id @default(cuid())
+  playlistId  String
+  title       String
+  artist      String
+  coverUrl    String?
+  externalUrl String?
+  position    Int      @default(0)
+  addedAt     DateTime @default(now())
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+}
+
+// =====================================================================
+// BLOGS (Phase 8 — long-form articles with drafts, categories, tags, SEO)
+// =====================================================================
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Article {
+  id            String        @id @default(cuid())
+  authorId      String
+  slug          String        @unique
+  title         String
+  excerpt       String?
+  content       String        @db.Text
+  coverImage    String?
+  category      String?
+  tags          String[]      @default([])
+  status        ArticleStatus @default(DRAFT)
+  metaTitle     String?
+  metaDescription String?
+  viewCount     Int           @default(0)
+  publishedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([status, publishedAt])
+}
+
+// =====================================================================
+// EVENTS (Phase 8 — online and local events with RSVPs)
+// =====================================================================
+
+enum RsvpStatus {
+  GOING
+  INTERESTED
+  NOT_GOING
+}
+
+model Event {
+  id           String   @id @default(cuid())
+  createdById  String
+  communityId  String?
+  title        String
+  description  String?  @db.Text
+  coverImage   String?
+  isOnline     Boolean  @default(false)
+  location     String?
+  onlineUrl    String?
+  startsAt     DateTime
+  endsAt       DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdBy User       @relation("EventCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  community Community? @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  rsvps     EventRsvp[]
+
+  @@index([startsAt])
+}
+
+model EventRsvp {
+  id        String     @id @default(cuid())
+  eventId   String
+  userId    String
+  status    RsvpStatus @default(GOING)
+  createdAt DateTime   @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
+
+// =====================================================================
+// CREATOR ECONOMY (Phase 9 — paid memberships, tips, Stripe billing)
+// =====================================================================
+
+enum SubscriptionInterval {
+  MONTH
+  YEAR
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+model MembershipTier {
+  id              String               @id @default(cuid())
+  creatorId       String
+  name            String
+  description     String?
+  priceCents      Int
+  interval        SubscriptionInterval @default(MONTH)
+  stripeProductId String?
+  stripePriceId   String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  creator       User           @relation("CreatorTiers", fields: [creatorId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+  posts         Post[]
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  subscriberId         String
+  creatorId            String
+  tierId               String
+  status               SubscriptionStatus @default(INCOMPLETE)
+  stripeSubscriptionId String?            @unique
+  stripeCustomerId     String?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  subscriber User           @relation("SubscriberSubscriptions", fields: [subscriberId], references: [id], onDelete: Cascade)
+  creator    User           @relation("CreatorSubscribers", fields: [creatorId], references: [id], onDelete: Cascade)
+  tier       MembershipTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriberId, creatorId])
+}
+
+model Tip {
+  id                    String   @id @default(cuid())
+  senderId              String
+  creatorId             String
+  amountCents           Int
+  message               String?
+  stripePaymentIntentId String?
+  createdAt             DateTime @default(now())
+
+  sender  User @relation("TipsSent", fields: [senderId], references: [id], onDelete: Cascade)
+  creator User @relation("TipsReceived", fields: [creatorId], references: [id], onDelete: Cascade)
+}
+
+// =====================================================================
+// ADMIN (Phase 10 — reports, moderation, audit logs)
+// =====================================================================
+
+enum ReportTargetType {
+  POST
+  COMMENT
+  USER
+  COMMUNITY
+  ARTICLE
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
+model Report {
+  id          String           @id @default(cuid())
+  reporterId  String
+  targetType  ReportTargetType
+  targetId    String
+  reason      String           @db.Text
+  status      ReportStatus     @default(PENDING)
+  resolvedById String?
+  createdAt   DateTime         @default(now())
+  resolvedAt  DateTime?
+
+  reporter   User  @relation("ReportsFiled", fields: [reporterId], references: [id], onDelete: Cascade)
+  resolvedBy User? @relation("ReportsResolved", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  action     String
+  targetType String?
+  targetId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
+
+// =====================================================================
+// SOCIAL EXTRAS (Phase 11 — guestbook, notifications, profile views, badges)
+// =====================================================================
+
+model GuestbookEntry {
+  id            String   @id @default(cuid())
+  profileUserId String
+  authorId      String
+  content       String   @db.Text
+  createdAt     DateTime @default(now())
+
+  profileUser User @relation("GuestbookReceived", fields: [profileUserId], references: [id], onDelete: Cascade)
+  author      User @relation("GuestbookWritten", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([profileUserId, createdAt])
+}
+
+enum NotificationType {
+  FRIEND_REQUEST
+  FRIEND_ACCEPT
+  POST_REACTION
+  POST_COMMENT
+  COMMENT_REPLY
+  GUESTBOOK
+  MESSAGE
+  TIP
+  MENTION
+  BADGE
+  PROFILE_VIEW
+  COMMUNITY
+  ANNOUNCEMENT
+  FOLLOW
+  STORY_REACTION
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  actorId   String?
+  type      NotificationType
+  message   String?
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user  User  @relation("NotificationsReceived", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("NotificationsActed", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, read, createdAt])
+}
+
+model ProfileView {
+  id            String   @id @default(cuid())
+  profileUserId String
+  viewerId      String
+  viewedAt      DateTime @default(now())
+
+  profileUser User @relation("ProfileViewsReceived", fields: [profileUserId], references: [id], onDelete: Cascade)
+  viewer      User @relation("ProfileViewsMade", fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@unique([profileUserId, viewerId])
+  @@index([profileUserId, viewedAt])
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badge     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badge])
+  @@index([userId])
+}
+
+model CommentReaction {
+  id        String   @id @default(cuid())
+  commentId String
+  userId    String
+  emoji     String   @default("❤️")
+  createdAt DateTime @default(now())
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([commentId])
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+}
+
+// =====================================================================
+// PHOTO ALBUMS (Phase 12 — user photo galleries with albums)
+// =====================================================================
+
+model Album {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  coverImage  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos Photo[]
+
+  @@index([userId])
+}
+
+model Photo {
+  id        String   @id @default(cuid())
+  userId    String
+  albumId   String?
+  url       String
+  caption   String?
+  createdAt DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  album Album? @relation(fields: [albumId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([albumId])
+}
+
+// =====================================================================
+// FOLLOWS & BLOCKS (Phase 13 — one-way follow graph + blocking)
+// =====================================================================
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("BlocksMade", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}

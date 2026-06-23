@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: myspace-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: myspace
+      POSTGRES_PASSWORD: myspace
+      POSTGRES_DB: myspace
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myspace"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Full containerized app stack. Not started by a plain `docker compose up`
+  # (keeps the fast local `npm run dev` workflow against just Postgres) —
+  # run with `docker compose --profile full up -d --build` to test the
+  # production Docker image end-to-end.
+  app:
+    build: .
+    container_name: myspace-app
+    profiles: ["full"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://myspace:myspace@postgres:5432/myspace?schema=public
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-secret-change-me-in-production}
+      APP_URL: http://localhost:3000
+      EMAIL_SERVER_HOST: ${EMAIL_SERVER_HOST:-}
+      EMAIL_SERVER_PORT: ${EMAIL_SERVER_PORT:-587}
+      EMAIL_SERVER_USER: ${EMAIL_SERVER_USER:-}
+      EMAIL_SERVER_PASSWORD: ${EMAIL_SERVER_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-MySpace Reborn <no-reply@myspace.local>}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres-data:

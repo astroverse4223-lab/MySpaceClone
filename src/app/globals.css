@@ -19,8 +19,187 @@
   }
 }
 
+/* ===== Site-wide themes (applied via html[data-theme]) ===== */
+:root,
+[data-theme="midnight"] {
+  --site-bg:
+    radial-gradient(900px circle at 12% -5%, rgba(124, 58, 237, 0.22), transparent),
+    radial-gradient(800px circle at 88% 8%, rgba(236, 72, 153, 0.16), transparent), #0a0a0f;
+  --site-accent: #8b5cf6;
+  --site-accent-2: #ec4899;
+}
+[data-theme="cyberpunk"] {
+  --site-bg:
+    radial-gradient(800px circle at 10% 0%, rgba(255, 0, 200, 0.2), transparent),
+    radial-gradient(800px circle at 90% 10%, rgba(0, 234, 255, 0.16), transparent), #07020e;
+  --site-accent: #f000b8;
+  --site-accent-2: #00eaff;
+}
+[data-theme="emerald"] {
+  --site-bg:
+    radial-gradient(900px circle at 15% -5%, rgba(16, 185, 129, 0.22), transparent),
+    radial-gradient(700px circle at 85% 15%, rgba(132, 204, 22, 0.14), transparent), #04110b;
+  --site-accent: #10b981;
+  --site-accent-2: #84cc16;
+}
+[data-theme="crimson"] {
+  --site-bg:
+    radial-gradient(900px circle at 12% -5%, rgba(244, 63, 94, 0.22), transparent),
+    radial-gradient(700px circle at 88% 12%, rgba(249, 115, 22, 0.14), transparent), #120406;
+  --site-accent: #f43f5e;
+  --site-accent-2: #fb923c;
+}
+[data-theme="ocean"] {
+  --site-bg:
+    radial-gradient(900px circle at 15% -5%, rgba(56, 189, 248, 0.2), transparent),
+    radial-gradient(800px circle at 85% 10%, rgba(99, 102, 241, 0.16), transparent), #030a17;
+  --site-accent: #38bdf8;
+  --site-accent-2: #6366f1;
+}
+[data-theme="gold"] {
+  --site-bg:
+    radial-gradient(900px circle at 50% -10%, rgba(234, 179, 8, 0.2), transparent),
+    radial-gradient(700px circle at 90% 20%, rgba(245, 158, 11, 0.12), transparent), #0c0a06;
+  --site-accent: #eab308;
+  --site-accent-2: #f59e0b;
+}
+[data-theme="aurora"] {
+  --site-bg:
+    radial-gradient(800px circle at 10% 0%, rgba(34, 211, 238, 0.18), transparent),
+    radial-gradient(800px circle at 50% 10%, rgba(167, 139, 250, 0.16), transparent),
+    radial-gradient(800px circle at 90% 5%, rgba(74, 222, 128, 0.14), transparent), #060912;
+  --site-accent: #22d3ee;
+  --site-accent-2: #a78bfa;
+}
+[data-theme="mono"] {
+  --site-bg:
+    radial-gradient(900px circle at 50% -10%, rgba(255, 255, 255, 0.08), transparent), #0b0b0d;
+  --site-accent: #e5e7eb;
+  --site-accent-2: #9ca3af;
+}
+
 body {
-  background: var(--background);
+  background: var(--site-bg);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Accent helpers driven by the active site theme */
+.bg-accent { background-color: var(--site-accent); }
+.text-accent { color: var(--site-accent); }
+.border-accent { border-color: var(--site-accent); }
+.from-site-accent { --tw-gradient-from: var(--site-accent); }
+.gradient-accent {
+  background-image: linear-gradient(to right, var(--site-accent), var(--site-accent-2));
+}
+
+/* ===== Glow-up animation toolkit ===== */
+@keyframes float-blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+@keyframes gradient-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.92); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes eq {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
+}
+
+.animate-float-blob { animation: float-blob 18s ease-in-out infinite; }
+.animate-fade-up { animation: fade-up 0.6s ease-out both; }
+.animate-pop-in { animation: pop-in 0.35s ease-out both; }
+
+/* MySpace-style glitter overlay for profile flair */
+@keyframes glitter-shift {
+  0% { background-position: 0 0, 0 0, 0 0; }
+  100% { background-position: 120px 240px, -180px 160px, 90px -120px; }
+}
+.profile-glitter {
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(255,200,255,0.8) 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(180,220,255,0.8) 1px, transparent 1.5px);
+  background-size: 120px 120px, 90px 90px, 70px 70px;
+  opacity: 0.35;
+  mix-blend-mode: screen;
+  animation: glitter-shift 6s linear infinite alternate;
+}
+.animate-marquee { animation: marquee 30s linear infinite; }
+
+.text-gradient-animated {
+  background: linear-gradient(90deg, #a78bfa, #f472b6, #22d3ee, #a78bfa);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-pan 6s ease infinite;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-blob,
+  .animate-fade-up,
+  .animate-pop-in,
+  .animate-marquee,
+  .text-gradient-animated {
+    animation: none;
+  }
+}
+
+/* ===== 🪩 Retro mode (data-retro="on") ===== */
+@keyframes retro-glow {
+  0%, 100% { box-shadow: 0 0 12px rgba(236, 72, 153, 0.4), inset 0 0 12px rgba(34, 211, 238, 0.15); }
+  50% { box-shadow: 0 0 18px rgba(34, 211, 238, 0.5), inset 0 0 18px rgba(236, 72, 153, 0.2); }
+}
+[data-retro="on"] :where(body, h1, h2, h3, h4, h5, p, span, a, button, input, textarea, select, label, li, div) {
+  font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", cursive !important;
+}
+[data-retro="on"] body {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">✨</text></svg>') 4 4, auto;
+}
+[data-retro="on"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1.5px),
+    radial-gradient(rgba(236, 72, 153, 0.4) 1px, transparent 1.5px);
+  background-size: 80px 80px, 110px 110px;
+  background-position: 0 0, 40px 60px;
+  opacity: 0.25;
+}
+[data-retro="on"] .glass {
+  animation: retro-glow 2.5s ease-in-out infinite;
+  border-color: rgba(236, 72, 153, 0.4) !important;
+}
+[data-retro="on"] h1,
+[data-retro="on"] h2 {
+  text-shadow: 0 0 6px rgba(236, 72, 153, 0.6), 0 0 12px rgba(34, 211, 238, 0.4);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-retro="on"] .glass { animation: none; }
 }
