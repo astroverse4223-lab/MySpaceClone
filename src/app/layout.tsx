@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
@@ -21,6 +21,21 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MySpace Reborn",
   description: "The social network MySpace should have become.",
+  appleWebApp: {
+    capable: true,
+    title: "MySpace",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0a0f",
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  // Extend content under the Dynamic Island / home indicator so we can paint
+  // edge to edge; safe-area insets are honored in CSS.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

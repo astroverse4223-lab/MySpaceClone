@@ -297,10 +297,10 @@ export function ChatWidget() {
   if (!loggedIn) return null;
 
   const unreadCount = conversations.filter((c) => c.unread).length;
-  const bottomOffset = playerActive ? "bottom-24" : "bottom-6";
+  const bottomOffset = playerActive ? "bottom-24" : "safe-bottom-offset";
 
   return (
-    <div className={`fixed right-6 z-50 ${bottomOffset}`}>
+    <div className={`fixed right-4 z-50 sm:right-6 ${bottomOffset}`}>
       {/* New-message popup */}
       {popup && !open && (
         <button

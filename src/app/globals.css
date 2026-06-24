@@ -86,6 +86,23 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* ===== Mobile / notch-safe helpers ===== */
+/* Avoid horizontal overflow on narrow phones. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Keep the fixed bottom UI (mini player, chat widget) clear of the
+   iPhone home indicator when running edge-to-edge (viewport-fit=cover). */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-bottom-offset {
+  bottom: calc(env(safe-area-inset-bottom) + 1.5rem);
+}
+
 /* Accent helpers driven by the active site theme */
 .bg-accent { background-color: var(--site-accent); }
 .text-accent { color: var(--site-accent); }

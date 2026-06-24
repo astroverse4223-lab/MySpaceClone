@@ -54,7 +54,7 @@ export function MiniPlayer() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#0c0c14]/90 backdrop-blur-xl">
+    <div className="safe-bottom fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#0c0c14]/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-2.5">
         <div className="flex items-center gap-1">
           {hasQueue && (
