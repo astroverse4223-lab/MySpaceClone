@@ -34,7 +34,15 @@ export function RealtimeProvider() {
     const socket = getSocket();
 
     const onSnapshot = (ids: string[]) => setSnapshot(ids);
-    const onUpdate = ({ userId, online }: { userId: string; online: boolean }) => setOnline(userId, online);
+    const onUpdate = ({
+      userId,
+      online,
+      lastSeenAt,
+    }: {
+      userId: string;
+      online: boolean;
+      lastSeenAt?: string | null;
+    }) => setOnline(userId, online, lastSeenAt);
     const onNotification = (n: IncomingNotification) =>
       push({ emoji: TYPE_EMOJI[n.type] ?? "🔔", message: n.message, href: n.link });
 

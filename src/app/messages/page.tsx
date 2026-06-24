@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { UserAvatar } from "@/components/friends/user-avatar";
+import { OnlineDot } from "@/components/realtime/online-dot";
 import { timeAgo } from "@/lib/time";
 import type { ConversationSummary } from "@/components/messages/types";
 
@@ -89,7 +90,12 @@ export default function MessagesPage() {
                 className="flex items-center justify-between rounded-xl px-3 py-3 hover:bg-white/5"
               >
                 <div className="flex items-center gap-3">
-                  <UserAvatar name={title ?? "?"} image={c.participants[0]?.image} />
+                  <div className="relative">
+                    <UserAvatar name={title ?? "?"} image={c.participants[0]?.image} />
+                    {!c.isGroup && c.participants[0] && (
+                      <OnlineDot userId={c.participants[0].id} className="absolute bottom-0 right-0 h-3 w-3" />
+                    )}
+                  </div>
                   <div>
                     <p className={`text-sm ${c.unread ? "font-semibold" : "font-medium"}`}>{title}</p>
                     <p className="max-w-[220px] truncate text-xs text-white/50">

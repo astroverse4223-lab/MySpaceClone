@@ -29,6 +29,7 @@ model User {
   twoFactorSecret       String?
   isSuspended           Boolean   @default(false)
   suspendedReason       String?
+  lastSeenAt            DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 

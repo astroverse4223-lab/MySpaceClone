@@ -1,17 +1,30 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { getSocket } from "@/lib/socket-client";
 import { timeAgo } from "@/lib/time";
+import { UserAvatar } from "@/components/friends/user-avatar";
+import { OnlineDot } from "@/components/realtime/online-dot";
+import { PresenceIndicator } from "@/components/realtime/presence-indicator";
 import type { ChatMessage } from "@/components/messages/types";
+
+type Participant = {
+  id: string;
+  username: string;
+  name: string | null;
+  image: string | null;
+  lastSeenAt: string | null;
+};
 
 export default function ConversationPage() {
   const { id } = useParams<{ id: string }>();
   const { data: session } = useSession();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [readByOthersAt, setReadByOthersAt] = useState<string | null>(null);
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [typingUser, setTypingUser] = useState<string | null>(null);
@@ -23,6 +36,8 @@ export default function ConversationPage() {
       .then((res) => res.json())
       .then((json) => {
         setMessages(json.messages ?? []);
+        setParticipants(json.participants ?? []);
+        setReadByOthersAt(json.readByOthersAt ?? null);
         setLoading(false);
       });
     fetch(`/api/conversations/${id}/read`, { method: "POST" });
@@ -52,19 +67,50 @@ export default function ConversationPage() {
       setTypingUser(isTyping ? userId : null);
     }
 
+    function onRead({
+      conversationId,
+      userId,
+      readAt,
+    }: {
+      conversationId: string;
+      userId: string;
+      readAt: string;
+    }) {
+      if (conversationId !== id || userId === session?.user?.id) return;
+      setReadByOthersAt((prev) => (!prev || readAt > prev ? readAt : prev));
+    }
+
     socket.on("message:new", onMessage);
     socket.on("typing", onTyping);
+    socket.on("conversation:read", onRead);
 
     return () => {
       socket.emit("conversation:leave", id);
       socket.off("message:new", onMessage);
       socket.off("typing", onTyping);
+      socket.off("conversation:read", onRead);
     };
   }, [id, session?.user?.id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // 1:1 conversations have exactly one "other" participant to show in the header.
+  const other = participants[0] ?? null;
+
+  // Index of my last sent message — read receipt only renders under it.
+  const lastMineIndex = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].senderId === session?.user?.id) return i;
+    }
+    return -1;
+  }, [messages, session?.user?.id]);
+
+  const lastMineSeen =
+    lastMineIndex >= 0 &&
+    readByOthersAt != null &&
+    new Date(readByOthersAt) >= new Date(messages[lastMineIndex].createdAt);
 
   function handleTyping(value: string) {
     setContent(value);
@@ -93,14 +139,29 @@ export default function ConversationPage() {
         ← Back to messages
       </Link>
 
+      {other && (
+        <div className="mt-3 flex items-center gap-3 border-b border-white/10 pb-3">
+          <div className="relative">
+            <UserAvatar name={other.name ?? other.username} image={other.image} size={40} />
+            <OnlineDot userId={other.id} className="absolute bottom-0 right-0 h-3 w-3" />
+          </div>
+          <div>
+            <Link href={`/profile/${other.username}`} className="text-sm font-semibold hover:underline">
+              {other.name ?? other.username}
+            </Link>
+            <PresenceIndicator userId={other.id} initialLastSeen={other.lastSeenAt} />
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 flex-1 space-y-3 overflow-y-auto">
         {loading ? (
           <p className="text-sm text-white/40">Loading...</p>
         ) : (
-          messages.map((m) => {
+          messages.map((m, i) => {
             const isMine = m.senderId === session?.user?.id;
             return (
-              <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+              <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                 <div
                   className={`max-w-xs rounded-2xl px-4 py-2 text-sm ${
                     isMine ? "bg-violet-500 text-white" : "bg-white/10 text-white/90"
@@ -113,6 +174,11 @@ export default function ConversationPage() {
                   {m.content}
                   <p className="mt-1 text-[10px] opacity-60">{timeAgo(m.createdAt)}</p>
                 </div>
+                {isMine && i === lastMineIndex && lastMineSeen && (
+                  <span className="mt-0.5 pr-1 text-[10px] text-white/40">
+                    Seen {readByOthersAt ? timeAgo(readByOthersAt) : ""}
+                  </span>
+                )}
               </div>
             );
           })

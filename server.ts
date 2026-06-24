@@ -3,6 +3,14 @@ import { parse } from "url";
 import next from "next";
 import { Server as SocketIOServer } from "socket.io";
 import { getToken } from "next-auth/jwt";
+import { prisma } from "./src/lib/prisma";
+
+/** Best-effort write of a user's last-seen timestamp; never throws into the socket layer. */
+function touchLastSeen(userId: string) {
+  prisma.user
+    .update({ where: { id: userId }, data: { lastSeenAt: new Date() } })
+    .catch(() => {});
+}
 
 const dev = process.env.NODE_ENV !== "production";
 const port = Number(process.env.PORT) || 3000;
@@ -45,9 +53,13 @@ app.prepare().then(() => {
     // Personal room so API handlers can push notifications/toasts to this user.
     socket.join(`user:${userId}`);
 
-    if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
+    const wasOffline = !onlineUsers.has(userId);
+    if (wasOffline) onlineUsers.set(userId, new Set());
     onlineUsers.get(userId)!.add(socket.id);
-    io.emit("presence:update", { userId, online: true });
+    if (wasOffline) {
+      touchLastSeen(userId);
+      io.emit("presence:update", { userId, online: true });
+    }
 
     socket.on("conversation:join", (conversationId: string) => {
       socket.join(`conversation:${conversationId}`);
@@ -70,7 +82,9 @@ app.prepare().then(() => {
       set?.delete(socket.id);
       if (set && set.size === 0) {
         onlineUsers.delete(userId);
-        io.emit("presence:update", { userId, online: false });
+        const lastSeenAt = new Date().toISOString();
+        touchLastSeen(userId);
+        io.emit("presence:update", { userId, online: false, lastSeenAt });
       }
     });
   });

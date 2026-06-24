@@ -6,6 +6,7 @@ import { getIO } from "@/lib/socket-server";
 import { createNotification } from "@/lib/notifications";
 
 const userSelect = { id: true, username: true, name: true, image: true } as const;
+const participantSelect = { id: true, username: true, name: true, image: true, lastSeenAt: true } as const;
 
 async function assertParticipant(conversationId: string, userId: string) {
   return prisma.conversationParticipant.findUnique({
@@ -39,17 +40,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const nextCursor = messages.length === limit ? messages[messages.length - 1].id : null;
 
-  // Read receipts: latest time any other participant has read this conversation.
+  // Read receipts + presence: pull other participants' read times and last-seen.
   const others = await prisma.conversationParticipant.findMany({
     where: { conversationId, userId: { not: session.user.id } },
-    select: { lastReadAt: true },
+    select: { lastReadAt: true, user: { select: participantSelect } },
   });
   const readByOthersAt = others.reduce<Date | null>((latest, p) => {
     if (!p.lastReadAt) return latest;
     return !latest || p.lastReadAt > latest ? p.lastReadAt : latest;
   }, null);
+  const participants = others.map((o) => o.user);
 
-  return NextResponse.json({ messages: messages.reverse(), nextCursor, readByOthersAt });
+  return NextResponse.json({ messages: messages.reverse(), nextCursor, readByOthersAt, participants });
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
