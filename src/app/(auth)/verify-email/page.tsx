@@ -57,7 +57,17 @@ function VerifyEmailContent() {
           </Link>
         </>
       )}
-      {status === "error" && <FormError message={error} />}
+      {status === "error" && (
+        <>
+          <FormError message={error} />
+          <Link
+            href="/resend-verification"
+            className="mt-4 block text-center text-sm text-violet-400 hover:underline"
+          >
+            Resend verification link
+          </Link>
+        </>
+      )}
     </AuthCard>
   );
 }

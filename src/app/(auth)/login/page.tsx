@@ -20,12 +20,14 @@ export default function LoginPage() {
   const [totpCode, setTotpCode] = useState("");
   const [needsTotp, setNeedsTotp] = useState(false);
   const [error, setError] = useState<string>();
+  const [showResend, setShowResend] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(undefined);
+    setShowResend(false);
 
     const res = await signIn("credentials", {
       email,
@@ -41,6 +43,9 @@ export default function LoginPage() {
         setNeedsTotp(true);
         return;
       }
+      if (res.code === "email-not-verified") {
+        setShowResend(true);
+      }
       setError((res.code && ERROR_MESSAGES[res.code]) ?? "Something went wrong. Please try again.");
       return;
     }
@@ -53,6 +58,14 @@ export default function LoginPage() {
     <AuthCard title="Welcome back" subtitle="Log in to your page">
       <form onSubmit={onSubmit} className="space-y-4">
         <FormError message={error} />
+        {showResend && (
+          <Link
+            href={`/resend-verification${email ? `?email=${encodeURIComponent(email)}` : ""}`}
+            className="-mt-2 block text-sm text-violet-400 hover:underline"
+          >
+            Didn&apos;t get the email? Resend verification link
+          </Link>
+        )}
         <input
           className={inputClass}
           placeholder="Email"

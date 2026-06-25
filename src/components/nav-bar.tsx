@@ -57,10 +57,8 @@ export function NavBar() {
     };
   }, [mobileOpen]);
 
-  const isAdmin =
-    session?.user?.role === "ADMIN" ||
-    session?.user?.role === "MODERATOR" ||
-    session?.user?.email?.toLowerCase() === "countryboya20@gmail.com";
+  // Admin area is restricted to the site owner email only.
+  const isAdmin = session?.user?.email?.toLowerCase() === "countryboya20@gmail.com";
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-xl pt-[env(safe-area-inset-top)]">

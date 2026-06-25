@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
-import { isStaff } from "@/lib/admin";
+import { isOwner } from "@/lib/admin";
 
 const NAV_SECTIONS: { title: string; items: { href: string; label: string; icon: string }[] }[] = [
   {
@@ -29,7 +29,7 @@ const NAV_SECTIONS: { title: string; items: { href: string; label: string; icon:
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!isStaff(session)) {
+  if (!isOwner(session)) {
     redirect("/");
   }
 

@@ -20,18 +20,22 @@ export function isStaff(session: Session | null | undefined): boolean {
   return isPrivilegedAdmin(session) || session?.user?.role === "MODERATOR";
 }
 
+/**
+ * Gate for the admin dashboard and every /api/admin/* route.
+ * The owner email is the ONLY account allowed in, regardless of stored role.
+ */
 export async function requireAdmin() {
   const session = await auth();
-  if (!isStaff(session)) {
+  if (!isOwner(session)) {
     return null;
   }
   return session;
 }
 
-/** Returns the session only if the viewer is the owner or an ADMIN. */
+/** Owner-only, same as requireAdmin. Kept as a separate name for owner-level destructive tools. */
 export async function requirePrivilegedAdmin() {
   const session = await auth();
-  if (!isPrivilegedAdmin(session)) {
+  if (!isOwner(session)) {
     return null;
   }
   return session;
