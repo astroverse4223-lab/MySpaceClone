@@ -269,18 +269,6 @@ body {
 [data-retro="on"] body {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">✨</text></svg>') 4 4, auto;
 }
-[data-retro="on"] body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1.5px),
-    radial-gradient(rgba(236, 72, 153, 0.4) 1px, transparent 1.5px);
-  background-size: 80px 80px, 110px 110px;
-  background-position: 0 0, 40px 60px;
-  opacity: 0.25;
-}
 [data-retro="on"] .glass {
   animation: retro-glow 2.5s ease-in-out infinite;
   border-color: rgba(236, 72, 153, 0.4) !important;
