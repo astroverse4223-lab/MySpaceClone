@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { enablePush, getExistingSubscription, pushSupported } from "@/lib/push-client";
+import { browserSupportsPush, enablePush, getExistingSubscription, getVapidKey } from "@/lib/push-client";
 
 const DISMISS_KEY = "push-nudge-dismissed";
 
@@ -18,7 +18,7 @@ export function PushNudge() {
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    if (!pushSupported()) return;
+    if (!browserSupportsPush()) return;
     // Only nudge when the user hasn't decided yet.
     if (Notification.permission !== "default") return;
     try {
@@ -27,11 +27,13 @@ export function PushNudge() {
       /* localStorage unavailable — continue */
     }
     let cancelled = false;
-    getExistingSubscription()
-      .then((sub) => {
-        if (!cancelled && !sub) setShow(true);
-      })
-      .catch(() => {});
+    (async () => {
+      // No point nudging if push isn't actually configured on the server.
+      const key = await getVapidKey();
+      if (cancelled || !key) return;
+      const sub = await getExistingSubscription().catch(() => null);
+      if (!cancelled && !sub) setShow(true);
+    })();
     return () => {
       cancelled = true;
     };

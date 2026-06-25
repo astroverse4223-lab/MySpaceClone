@@ -1,7 +1,12 @@
 // Browser-side helpers for Web Push. Shared by the settings toggle and the
 // navbar nudge so the subscribe flow lives in exactly one place.
 
-export const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+// If the build-time variable happens to be present we use it directly; if not
+// (e.g. on Railway, where env vars only exist at runtime) we fall back to
+// fetching the public key from /api/push/vapid-key.
+const BUILD_TIME_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
+
+let cachedKey: string | null | undefined; // undefined = not fetched yet
 
 // The browser's PushManager wants the application server key as a Uint8Array.
 function urlBase64ToUint8Array(base64String: string) {
@@ -24,17 +29,22 @@ export function browserSupportsPush() {
   );
 }
 
-/** True if this build has the VAPID public key baked in. */
-export function pushConfigured() {
-  return Boolean(VAPID_PUBLIC_KEY);
-}
-
-export function pushSupported() {
-  return browserSupportsPush() && pushConfigured();
+/** Resolve the VAPID public key, preferring the build-time value, else fetching. */
+export async function getVapidKey(): Promise<string | null> {
+  if (BUILD_TIME_KEY) return BUILD_TIME_KEY;
+  if (cachedKey !== undefined) return cachedKey;
+  try {
+    const res = await fetch("/api/push/vapid-key");
+    const json = res.ok ? await res.json() : null;
+    cachedKey = json && typeof json.key === "string" && json.key ? json.key : null;
+  } catch {
+    cachedKey = null;
+  }
+  return cachedKey ?? null;
 }
 
 export async function getExistingSubscription() {
-  if (!pushSupported()) return null;
+  if (!browserSupportsPush()) return null;
   const reg = await navigator.serviceWorker.ready;
   return reg.pushManager.getSubscription();
 }
@@ -42,9 +52,13 @@ export async function getExistingSubscription() {
 /**
  * Ask permission, subscribe, and persist the subscription server-side.
  * Returns the resulting permission state so callers can react to a denial.
+ * Throws "not-configured" if no VAPID key is available.
  */
 export async function enablePush(): Promise<NotificationPermission> {
-  if (!pushSupported()) return "denied";
+  if (!browserSupportsPush()) return "denied";
+
+  const key = await getVapidKey();
+  if (!key) throw new Error("not-configured");
 
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return permission;
@@ -53,7 +67,7 @@ export async function enablePush(): Promise<NotificationPermission> {
   await navigator.serviceWorker.ready;
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY!),
+    applicationServerKey: urlBase64ToUint8Array(key),
   });
 
   const res = await fetch("/api/push/subscribe", {
@@ -67,7 +81,7 @@ export async function enablePush(): Promise<NotificationPermission> {
 }
 
 export async function disablePush() {
-  if (!pushSupported()) return;
+  if (!browserSupportsPush()) return;
   const reg = await navigator.serviceWorker.ready;
   const sub = await reg.pushManager.getSubscription();
   if (!sub) return;

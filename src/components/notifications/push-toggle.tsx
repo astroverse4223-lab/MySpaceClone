@@ -6,7 +6,7 @@ import {
   disablePush,
   enablePush,
   getExistingSubscription,
-  pushConfigured,
+  getVapidKey,
 } from "@/lib/push-client";
 
 type State = "loading" | "unsupported" | "unconfigured" | "off" | "on" | "denied" | "busy";
@@ -20,17 +20,23 @@ export function PushToggle() {
       setState("unsupported");
       return;
     }
-    if (!pushConfigured()) {
-      setState("unconfigured");
-      return;
-    }
     if (Notification.permission === "denied") {
       setState("denied");
       return;
     }
-    getExistingSubscription()
-      .then((sub) => setState(sub ? "on" : "off"))
-      .catch(() => setState("off"));
+    (async () => {
+      const key = await getVapidKey();
+      if (!key) {
+        setState("unconfigured");
+        return;
+      }
+      try {
+        const sub = await getExistingSubscription();
+        setState(sub ? "on" : "off");
+      } catch {
+        setState("off");
+      }
+    })();
   }, []);
 
   async function enable() {
@@ -43,7 +49,11 @@ export function PushToggle() {
       } else {
         setState(permission === "denied" ? "denied" : "off");
       }
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.message === "not-configured") {
+        setState("unconfigured");
+        return;
+      }
       setError("Couldn't enable push notifications. Try again.");
       setState("off");
     }
