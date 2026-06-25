@@ -4,6 +4,7 @@ import path from "path";
 import crypto from "crypto";
 import { auth } from "@/auth";
 import { rateLimit } from "@/lib/rate-limit";
+import { isR2Configured, uploadToR2 } from "@/lib/storage";
 
 const ALLOWED_TYPES: Record<string, string> = {
   "image/png": "png",
@@ -52,12 +53,27 @@ export async function POST(request: Request) {
     );
   }
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-
   const filename = `${session.user.id}-${crypto.randomBytes(8).toString("hex")}.${ext}`;
   const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(uploadDir, filename), bytes);
 
-  return NextResponse.json({ url: `/uploads/${filename}` });
+  try {
+    // Production: store in Cloudflare R2 (persistent, survives redeploys).
+    if (isR2Configured) {
+      const url = await uploadToR2({
+        key: `uploads/${filename}`,
+        body: bytes,
+        contentType: file.type,
+      });
+      return NextResponse.json({ url });
+    }
+
+    // Local dev fallback: write to the public/ folder so it's served by Next.
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    await mkdir(uploadDir, { recursive: true });
+    await writeFile(path.join(uploadDir, filename), bytes);
+    return NextResponse.json({ url: `/uploads/${filename}` });
+  } catch (err) {
+    console.error("upload: failed to store file", err);
+    return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 500 });
+  }
 }

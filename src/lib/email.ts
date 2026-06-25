@@ -25,19 +25,34 @@ function getTransport() {
 }
 
 async function sendViaResend(options: { to: string; subject: string; html: string }) {
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: FROM_ADDRESS,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-    }),
-  });
+  // Don't let a stuck connection to Resend hang the request forever.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+
+  let res: Response;
+  try {
+    res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+      }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error("Resend request timed out after 10s (couldn't reach api.resend.com)");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
