@@ -6,9 +6,11 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { SearchBox } from "@/components/search/search-box";
 
 const PRIMARY_LINKS = [
   { href: "/feed", label: "Feed" },
+  { href: "/whats-new", label: "What's New" },
   { href: "/friends", label: "Friends" },
   { href: "/messages", label: "Messages" },
 ];
@@ -84,6 +86,8 @@ export function NavBar() {
                   {link.label}
                 </Link>
               ))}
+
+              <SearchBox />
 
               <NotificationBell />
 
@@ -197,6 +201,9 @@ export function NavBar() {
 
             {status === "loading" ? null : session?.user ? (
               <>
+                <div className="mb-3">
+                  <SearchBox />
+                </div>
                 <div className="grid gap-1">
                   {[...PRIMARY_LINKS, ...MORE_LINKS].map((link) => (
                     <Link

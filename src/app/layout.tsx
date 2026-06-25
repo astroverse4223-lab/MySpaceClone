@@ -8,6 +8,7 @@ import { ChatWidget } from "@/components/chat/chat-widget";
 import { RealtimeProvider } from "@/components/realtime/realtime-provider";
 import { Toaster } from "@/components/realtime/toaster";
 import { PwaInstall } from "@/components/pwa-install";
+import { PushNudge } from "@/components/notifications/push-nudge";
 import { AnimatedBackground } from "@/components/animated-background";
 
 const geistSans = Geist({
@@ -70,6 +71,7 @@ export default function RootLayout({
           <RealtimeProvider />
           <Toaster />
           <PwaInstall />
+          <PushNudge />
         </Providers>
       </body>
     </html>

@@ -30,6 +30,8 @@ model User {
   isSuspended           Boolean   @default(false)
   suspendedReason       String?
   lastSeenAt            DateTime?
+  emailDigest           Boolean   @default(true)
+  lastDigestAt          DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -94,6 +96,7 @@ model User {
   blocksMade            Block[]     @relation("BlocksMade")
   blocksReceived        Block[]     @relation("BlocksReceived")
   storyReactions        StoryReaction[]
+  pushSubscriptions     PushSubscription[]
 }
 
 enum Role {
@@ -929,4 +932,22 @@ model Block {
 
   @@unique([blockerId, blockedId])
   @@index([blockedId])
+}
+
+// =====================================================================
+// WEB PUSH (browser push subscriptions for re-engagement)
+// =====================================================================
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

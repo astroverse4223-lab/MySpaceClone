@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { NotificationType } from "@prisma/client";
 import { getIO } from "@/lib/socket-server";
+import { sendPushToUser } from "@/lib/push";
 
 type CreateNotificationInput = {
   /** Recipient user id. */
@@ -30,6 +31,17 @@ export async function createNotification(input: CreateNotificationInput) {
       },
     });
     getIO()?.to(`user:${input.userId}`).emit("notification:new", notification);
+
+    // Fire a browser push too (best-effort, no-op if push isn't configured or
+    // the user has no registered devices). Don't await so a slow push service
+    // never delays the request that created the notification.
+    void sendPushToUser(input.userId, {
+      title: "MySpace Reborn",
+      body: input.message,
+      url: input.link ?? "/feed",
+      tag: input.type,
+    });
+
     return notification;
   } catch {
     return null;

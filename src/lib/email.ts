@@ -155,6 +155,32 @@ export async function sendVerificationEmail(to: string, token: string) {
   });
 }
 
+export async function sendDigestEmail(
+  to: string,
+  data: { count: number; lines: string[]; username?: string | null },
+) {
+  const url = `${process.env.APP_URL}/feed`;
+  const items = data.lines
+    .map(
+      (line) =>
+        `<tr><td style="padding:8px 0;border-bottom:1px solid #2a2836;font-size:14px;line-height:1.5;color:#d8d6e4;">${line}</td></tr>`,
+    )
+    .join("");
+  const noun = data.count === 1 ? "notification" : "notifications";
+  await sendEmail({
+    to,
+    subject: `You have ${data.count} new ${noun} on MySpace Reborn`,
+    html: emailLayout({
+      preheader: `${data.count} new ${noun} are waiting for you.`,
+      heading: `While you were away ✨`,
+      body: `You've got <strong style="color:#f5f5f7;">${data.count} new ${noun}</strong>. Here's what you missed:<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">${items}</table>`,
+      cta: { label: "Catch up now", url },
+      footnote:
+        "You're getting this digest because email notifications are on. Turn them off anytime in Settings.",
+    }),
+  });
+}
+
 export async function sendPasswordResetEmail(to: string, token: string) {
   const url = `${process.env.APP_URL}/reset-password?token=${token}`;
   await sendEmail({

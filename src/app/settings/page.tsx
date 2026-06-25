@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { PushToggle } from "@/components/notifications/push-toggle";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -83,6 +84,9 @@ export default function SettingsPage() {
           </Link>
         ))}
       </section>
+
+      {/* Push notifications */}
+      <PushToggle />
 
       {/* Your data */}
       <section className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-5">

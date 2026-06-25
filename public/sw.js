@@ -13,6 +13,48 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// ---- Web Push --------------------------------------------------------------
+// The server sends a JSON payload of { title, body, url, icon, tag }. We show a
+// notification, and on click focus an existing tab (or open a new one) at `url`.
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : "" };
+  }
+
+  const title = data.title || "MySpace Reborn";
+  const options = {
+    body: data.body || "",
+    icon: data.icon || "/icon",
+    badge: "/icon",
+    tag: data.tag || undefined,
+    data: { url: data.url || "/feed" },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || "/feed";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      // Reuse an open tab if we have one.
+      for (const client of clientList) {
+        if ("focus" in client) {
+          client.navigate(target).catch(() => {});
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
+    }),
+  );
+});
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
