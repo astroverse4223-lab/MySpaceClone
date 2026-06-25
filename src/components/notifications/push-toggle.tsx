@@ -1,17 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { disablePush, enablePush, getExistingSubscription, pushSupported } from "@/lib/push-client";
+import {
+  browserSupportsPush,
+  disablePush,
+  enablePush,
+  getExistingSubscription,
+  pushConfigured,
+} from "@/lib/push-client";
 
-type State = "loading" | "unsupported" | "off" | "on" | "denied" | "busy";
+type State = "loading" | "unsupported" | "unconfigured" | "off" | "on" | "denied" | "busy";
 
 export function PushToggle() {
   const [state, setState] = useState<State>("loading");
   const [error, setError] = useState<string>();
 
   useEffect(() => {
-    if (!pushSupported()) {
+    if (!browserSupportsPush()) {
       setState("unsupported");
+      return;
+    }
+    if (!pushConfigured()) {
+      setState("unconfigured");
       return;
     }
     if (Notification.permission === "denied") {
@@ -65,6 +75,14 @@ export function PushToggle() {
           <p className="text-sm text-white/40">
             Push isn&apos;t available in this browser. On iPhone, add the app to your Home Screen
             first.
+          </p>
+        )}
+
+        {state === "unconfigured" && (
+          <p className="text-sm text-amber-300/80">
+            Push isn&apos;t set up on the server yet. Add{" "}
+            <code className="rounded bg-white/10 px-1">NEXT_PUBLIC_VAPID_PUBLIC_KEY</code> to your
+            hosting environment and redeploy.
           </p>
         )}
 

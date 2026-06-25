@@ -13,14 +13,24 @@ function urlBase64ToUint8Array(base64String: string) {
   return output;
 }
 
-export function pushSupported() {
+/** True if the browser itself has the APIs needed for Web Push. */
+export function browserSupportsPush() {
   return (
     typeof window !== "undefined" &&
     "serviceWorker" in navigator &&
     "PushManager" in window &&
     "Notification" in window &&
-    Boolean(VAPID_PUBLIC_KEY)
+    window.isSecureContext
   );
+}
+
+/** True if this build has the VAPID public key baked in. */
+export function pushConfigured() {
+  return Boolean(VAPID_PUBLIC_KEY);
+}
+
+export function pushSupported() {
+  return browserSupportsPush() && pushConfigured();
 }
 
 export async function getExistingSubscription() {
