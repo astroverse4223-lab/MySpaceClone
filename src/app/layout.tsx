@@ -7,6 +7,8 @@ import { MiniPlayer } from "@/components/player/mini-player";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { RealtimeProvider } from "@/components/realtime/realtime-provider";
 import { Toaster } from "@/components/realtime/toaster";
+import { PwaInstall } from "@/components/pwa-install";
+import { AnimatedBackground } from "@/components/animated-background";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,12 +62,14 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col text-white">
         <Providers>
+          <AnimatedBackground />
           <NavBar />
           <main className="flex-1">{children}</main>
           <MiniPlayer />
           <ChatWidget />
           <RealtimeProvider />
           <Toaster />
+          <PwaInstall />
         </Providers>
       </body>
     </html>

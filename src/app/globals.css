@@ -186,6 +186,78 @@ body {
   }
 }
 
+/* ===== Animated site backgrounds (chosen in the theme menu) ===== */
+/* Colors come from the active theme via --site-accent / --site-accent-2, so
+   these match whatever palette is selected. Never rendered on profile pages. */
+.bg-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.45;
+  animation: float-blob 20s ease-in-out infinite;
+}
+
+@keyframes aurora-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.bg-aurora {
+  position: absolute;
+  inset: -30%;
+  background: conic-gradient(
+    from 0deg,
+    var(--site-accent), transparent 25%,
+    var(--site-accent-2), transparent 55%,
+    var(--site-accent), transparent 80%,
+    var(--site-accent)
+  );
+  filter: blur(90px);
+  opacity: 0.32;
+  animation: aurora-spin 28s linear infinite;
+}
+
+@keyframes star-drift {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 300px 600px, -200px 400px; }
+}
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.6; }
+}
+.bg-stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.9) 1px, transparent 1.6px),
+    radial-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1.6px);
+  background-size: 150px 150px, 90px 90px;
+  background-position: 0 0, 45px 70px;
+  animation: star-drift 140s linear infinite, star-twinkle 6s ease-in-out infinite;
+}
+
+@keyframes bubble-rise {
+  0% { transform: translateY(0) scale(0.9); opacity: 0; }
+  12% { opacity: 0.5; }
+  100% { transform: translateY(-112vh) scale(1.25); opacity: 0; }
+}
+.bg-bubble {
+  position: absolute;
+  bottom: -12vh;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.55), var(--site-accent));
+  opacity: 0.4;
+  animation: bubble-rise linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-orb,
+  .bg-aurora,
+  .bg-stars,
+  .bg-bubble {
+    animation: none;
+  }
+}
+
 /* ===== 🪩 Retro mode (data-retro="on") ===== */
 @keyframes retro-glow {
   0%, 100% { box-shadow: 0 0 12px rgba(236, 72, 153, 0.4), inset 0 0 12px rgba(34, 211, 238, 0.15); }

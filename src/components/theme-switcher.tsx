@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { BG_ANIMATIONS, BG_STORAGE_KEY, BG_CHANGE_EVENT } from "@/components/animated-background";
 
 type SiteTheme = { id: string; name: string; preview: string };
 
@@ -21,6 +22,7 @@ export function ThemeSwitcher() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("midnight");
   const [retro, setRetro] = useState(false);
+  const [bgAnim, setBgAnim] = useState("none");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,10 +31,21 @@ export function ThemeSwitcher() {
       if (saved) setActive(saved);
       else setActive(document.documentElement.getAttribute("data-theme") ?? "midnight");
       setRetro(localStorage.getItem("retro-mode") === "on");
+      setBgAnim(localStorage.getItem(BG_STORAGE_KEY) ?? "none");
     } catch {
       /* ignore */
     }
   }, []);
+
+  function chooseBg(id: string) {
+    setBgAnim(id);
+    try {
+      localStorage.setItem(BG_STORAGE_KEY, id);
+    } catch {
+      /* ignore */
+    }
+    window.dispatchEvent(new CustomEvent(BG_CHANGE_EVENT, { detail: id }));
+  }
 
   function toggleRetro() {
     const nextOn = !retro;
@@ -103,6 +116,25 @@ export function ThemeSwitcher() {
                 {active === t.id && <span className="ml-auto text-xs text-white/50">✓</span>}
               </button>
             ))}
+          </div>
+
+          <div className="mt-1 border-t border-white/10 pt-1">
+            <p className="px-2 py-1.5 text-xs font-semibold text-white/50">Background motion ✨</p>
+            <div className="grid grid-cols-1 gap-0.5">
+              {BG_ANIMATIONS.map((b) => (
+                <button
+                  key={b.id}
+                  onClick={() => chooseBg(b.id)}
+                  className={`flex items-center gap-3 rounded-lg px-2 py-2 text-sm transition hover:bg-white/10 ${
+                    bgAnim === b.id ? "bg-white/10 text-white" : "text-white/80"
+                  }`}
+                >
+                  <span className="grid h-5 w-5 place-items-center text-base">{b.emoji}</span>
+                  {b.name}
+                  {bgAnim === b.id && <span className="ml-auto text-xs text-white/50">✓</span>}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="mt-1 border-t border-white/10 pt-1">
