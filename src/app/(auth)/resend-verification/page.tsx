@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AuthCard, FormSuccess, inputClass, buttonClass } from "@/components/auth/auth-card";
+import { AuthCard, FormSuccess, FormError, inputClass, buttonClass } from "@/components/auth/auth-card";
 
 export default function ResendVerificationPage() {
   return (
@@ -17,18 +17,30 @@ function ResendVerificationContent() {
   const params = useSearchParams();
   const [email, setEmail] = useState(params.get("email") ?? "");
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await fetch("/api/auth/resend-verification", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    setLoading(false);
-    setSubmitted(true);
+    setError(undefined);
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        setError(json?.error ?? "Couldn't send the email. Please try again.");
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setError("Couldn't reach the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (submitted) {
@@ -45,6 +57,7 @@ function ResendVerificationContent() {
   return (
     <AuthCard title="Resend verification email" subtitle="We'll send you a new link to verify your account.">
       <form onSubmit={onSubmit} className="space-y-4">
+        <FormError message={error} />
         <input
           className={inputClass}
           placeholder="Email"

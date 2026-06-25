@@ -34,7 +34,17 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendVerificationEmail(user.email, token);
+    try {
+      await sendVerificationEmail(user.email, token);
+    } catch (err) {
+      // Log the real provider error to the server logs, and return it so it's
+      // visible while we debug delivery. (Tighten this once email works.)
+      console.error("resend-verification: failed to send email", err);
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Failed to send email" },
+        { status: 500 },
+      );
+    }
   }
 
   return NextResponse.json({ success: true });
