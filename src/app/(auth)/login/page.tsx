@@ -104,6 +104,12 @@ export default function LoginPage() {
           Create an account
         </Link>
       </div>
+      <Link
+        href={`/resend-verification${email ? `?email=${encodeURIComponent(email)}` : ""}`}
+        className="mt-3 block text-center text-sm text-white/50 hover:text-white"
+      >
+        Didn&apos;t get a verification email? Resend it
+      </Link>
     </AuthCard>
   );
 }

@@ -1,6 +1,12 @@
 import nodemailer from "nodemailer";
 
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const hasSmtpConfig = Boolean(process.env.EMAIL_SERVER_HOST);
+
+// Resend's shared sender works without verifying a domain, but it can only
+// deliver to the address that owns the Resend account. Set EMAIL_FROM to an
+// address on your verified domain to send to anyone.
+const FROM_ADDRESS = process.env.EMAIL_FROM ?? "MySpace Reborn <onboarding@resend.dev>";
 
 function getTransport() {
   if (!hasSmtpConfig) return null;
@@ -18,11 +24,38 @@ function getTransport() {
   });
 }
 
+async function sendViaResend(options: { to: string; subject: string; html: string }) {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: FROM_ADDRESS,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    }),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    // Surface the failure so it shows up in the server logs instead of silently dropping.
+    throw new Error(`Resend API error ${res.status}: ${detail}`);
+  }
+}
+
 export async function sendEmail(options: { to: string; subject: string; html: string }) {
+  if (RESEND_API_KEY) {
+    await sendViaResend(options);
+    return;
+  }
+
   const transport = getTransport();
 
   if (!transport) {
-    console.log("\n========== EMAIL (dev mode, no SMTP configured) ==========");
+    console.log("\n========== EMAIL (dev mode, no email provider configured) ==========");
     console.log(`To: ${options.to}`);
     console.log(`Subject: ${options.subject}`);
     console.log(options.html.replace(/<[^>]+>/g, " "));
@@ -31,7 +64,7 @@ export async function sendEmail(options: { to: string; subject: string; html: st
   }
 
   await transport.sendMail({
-    from: process.env.EMAIL_FROM ?? "MySpace Reborn <no-reply@myspace.local>",
+    from: FROM_ADDRESS,
     to: options.to,
     subject: options.subject,
     html: options.html,
