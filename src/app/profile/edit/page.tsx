@@ -27,6 +27,7 @@ interface ProfileForm {
   profileSongTitle: string;
   cursorEffect: string;
   glitter: boolean;
+  bgEffect: string;
   stickers: { emoji: string; x: number; y: number }[];
 }
 
@@ -51,18 +52,44 @@ const EMPTY_FORM: ProfileForm = {
   profileSongTitle: "",
   cursorEffect: "none",
   glitter: false,
+  bgEffect: "none",
   stickers: [],
 };
 
 const MOOD_PRESETS = ["😀", "😎", "🥰", "😴", "🤔", "😭", "🔥", "🎉", "💀", "🌈", "☕", "🎵"];
 const CURSOR_EFFECTS = [
   { id: "none", label: "None" },
+  { id: "neon", label: "🌐 Neon trail" },
+  { id: "matrix", label: "🟩 Matrix code" },
+  { id: "fire", label: "🔥 Fire" },
+  { id: "lightning", label: "⚡ Lightning" },
+  { id: "skulls", label: "💀 Skulls" },
+  { id: "smoke", label: "💨 Smoke" },
+  { id: "frost", label: "❄️ Frost" },
+  { id: "vortex", label: "🌀 Vortex" },
   { id: "sparkles", label: "✨ Sparkles" },
   { id: "hearts", label: "💖 Hearts" },
   { id: "stars", label: "⭐ Stars" },
   { id: "bubbles", label: "🫧 Bubbles" },
 ];
-const STICKER_CHOICES = ["⭐", "💖", "🔥", "🌈", "🦋", "🌸", "💀", "👽", "🎀", "✨", "🍄", "🛸", "😎", "🎵", "💜"];
+const STICKER_CHOICES = [
+  // edgy / cool
+  "💀", "☠️", "⚡", "🔥", "🩸", "👾", "🤖", "👽", "🛸", "🗿", "🃏", "💣", "🥷", "🦂", "🐉",
+  "♠️", "♣️", "🤘", "🕹️", "🎮", "🛹", "🎸", "📼", "🔮", "🪐", "🌌", "👁️", "⛓️", "🏴",
+  // classic
+  "⭐", "🌈", "🦋", "🌸", "🎀", "✨", "🍄", "😎", "🎵", "💜",
+];
+const BG_EFFECTS = [
+  { id: "none", label: "None" },
+  { id: "starfield", label: "🌌 Starfield" },
+  { id: "grid", label: "🟪 Synthwave grid" },
+  { id: "embers", label: "🔥 Embers" },
+  { id: "aurora", label: "🌠 Aurora" },
+  { id: "nebula", label: "🪐 Nebula" },
+  { id: "snow", label: "❄️ Snow" },
+  { id: "rain", label: "🌧️ Rain" },
+  { id: "glitter", label: "✨ Glitter" },
+];
 
 export default function EditProfilePage() {
   const { data: session } = useSession();
@@ -106,6 +133,13 @@ export default function EditProfilePage() {
             profileSongTitle: json.profile.profileSongTitle ?? "",
             cursorEffect: json.profile.cursorEffect ?? "none",
             glitter: json.profile.glitter ?? false,
+            // Prefer the new bgEffect; fall back to the legacy glitter boolean.
+            bgEffect:
+              json.profile.bgEffect && json.profile.bgEffect !== "none"
+                ? json.profile.bgEffect
+                : json.profile.glitter
+                  ? "glitter"
+                  : "none",
             stickers: Array.isArray(json.profile.stickers) ? json.profile.stickers : [],
           });
         }
@@ -173,7 +207,9 @@ export default function EditProfilePage() {
         profileSongUrl: form.profileSongUrl,
         profileSongTitle: form.profileSongTitle || undefined,
         cursorEffect: form.cursorEffect,
-        glitter: form.glitter,
+        bgEffect: form.bgEffect,
+        // Keep the legacy boolean in sync so older render paths still work.
+        glitter: form.bgEffect === "glitter",
         stickers: form.stickers,
       }),
     });
@@ -534,16 +570,19 @@ export default function EditProfilePage() {
                 ))}
               </select>
             </div>
-            <div className="flex items-end">
-              <label className="flex cursor-pointer items-center gap-2 text-sm text-white/80">
-                <input
-                  type="checkbox"
-                  checked={form.glitter}
-                  onChange={(e) => setForm((f) => ({ ...f, glitter: e.target.checked }))}
-                  className="h-4 w-4 accent-violet-500"
-                />
-                ✨ Glitter background
-              </label>
+            <div>
+              <label className="mb-1 block text-xs text-white/60">Background effect</label>
+              <select
+                className={input}
+                value={form.bgEffect}
+                onChange={(e) => setForm((f) => ({ ...f, bgEffect: e.target.value }))}
+              >
+                {BG_EFFECTS.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

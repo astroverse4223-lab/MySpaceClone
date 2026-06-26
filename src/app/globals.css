@@ -159,6 +159,109 @@ body {
   mix-blend-mode: screen;
   animation: glitter-shift 6s linear infinite alternate;
 }
+
+/* ---- Profile background effects (full-screen overlays, purely decorative) ---- */
+
+/* Starfield: drifting + twinkling stars over deep space */
+@keyframes fx-star-drift { from { background-position: 0 0, 0 0, 0 0; } to { background-position: 300px 600px, -220px 420px, 120px 260px; } }
+@keyframes fx-twinkle { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.8; } }
+.bg-fx-starfield {
+  background-color: rgba(2, 2, 12, 0.35);
+  background-image:
+    radial-gradient(rgba(255,255,255,0.95) 1px, transparent 1.6px),
+    radial-gradient(rgba(180,220,255,0.7) 1px, transparent 1.6px),
+    radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1.6px);
+  background-size: 160px 160px, 90px 90px, 220px 220px;
+  background-position: 0 0, 45px 70px, 110px 30px;
+  animation: fx-star-drift 160s linear infinite, fx-twinkle 5s ease-in-out infinite;
+}
+
+/* Aurora: slow rotating conic glow in the user's accent colors */
+@keyframes fx-aurora-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.bg-fx-aurora { overflow: hidden; }
+.bg-fx-aurora::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg, #7c3aed, transparent 25%, #22d3ee, transparent 55%, #f472b6, transparent 80%, #7c3aed);
+  filter: blur(100px);
+  opacity: 0.3;
+  animation: fx-aurora-spin 32s linear infinite;
+}
+
+/* Synthwave grid: neon perspective grid scrolling toward the viewer */
+@keyframes fx-grid-scroll { from { background-position: 0 0; } to { background-position: 0 40px; } }
+.bg-fx-grid {
+  background-image:
+    linear-gradient(rgba(244, 114, 182, 0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.35) 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px;
+  opacity: 0.5;
+  mask-image: linear-gradient(to bottom, transparent, black 60%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 60%);
+  animation: fx-grid-scroll 1.6s linear infinite;
+}
+
+/* Embers: glowing orange specks rising like a campfire */
+@keyframes fx-embers-rise { from { background-position: 0 0, 0 0, 0 0; } to { background-position: 40px -700px, -60px -900px, 20px -1100px; } }
+.bg-fx-embers {
+  background-image:
+    radial-gradient(circle, rgba(255,170,60,0.9) 1.4px, transparent 2px),
+    radial-gradient(circle, rgba(255,90,30,0.8) 1.2px, transparent 2px),
+    radial-gradient(circle, rgba(255,220,120,0.7) 1px, transparent 1.6px);
+  background-size: 180px 180px, 130px 130px, 90px 90px;
+  opacity: 0.55;
+  mix-blend-mode: screen;
+  animation: fx-embers-rise 9s linear infinite;
+}
+
+/* Snow: soft white flakes drifting down */
+@keyframes fx-snow-fall { from { background-position: 0 0, 0 0, 0 0; } to { background-position: 20px 700px, -40px 900px, 60px 1100px; } }
+.bg-fx-snow {
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.95) 1.6px, transparent 2.4px),
+    radial-gradient(circle, rgba(255,255,255,0.8) 1.2px, transparent 2px),
+    radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1.6px);
+  background-size: 200px 200px, 140px 140px, 90px 90px;
+  opacity: 0.6;
+  animation: fx-snow-fall 12s linear infinite;
+}
+
+/* Rain: thin streaks falling fast */
+@keyframes fx-rain-fall { from { background-position: 0 0; } to { background-position: 0 600px; } }
+.bg-fx-rain {
+  background-image: repeating-linear-gradient(110deg, rgba(160,200,255,0.28) 0 1px, transparent 1px 9px);
+  opacity: 0.5;
+  animation: fx-rain-fall 0.55s linear infinite;
+}
+
+/* Nebula: large blurred colored clouds slowly breathing */
+@keyframes fx-nebula-drift { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(4%, -3%) scale(1.12); } }
+.bg-fx-nebula { overflow: hidden; }
+.bg-fx-nebula::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(closest-side, rgba(124,58,237,0.5), transparent 70%) 20% 30% / 55% 55% no-repeat,
+    radial-gradient(closest-side, rgba(34,211,238,0.4), transparent 70%) 75% 60% / 50% 50% no-repeat,
+    radial-gradient(closest-side, rgba(244,114,182,0.4), transparent 70%) 55% 80% / 45% 45% no-repeat;
+  filter: blur(70px);
+  opacity: 0.45;
+  animation: fx-nebula-drift 26s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-glitter,
+  .bg-fx-starfield,
+  .bg-fx-grid,
+  .bg-fx-embers,
+  .bg-fx-snow,
+  .bg-fx-rain { animation: none; }
+  .bg-fx-aurora::before,
+  .bg-fx-nebula::before { animation: none; }
+}
+
 .animate-marquee { animation: marquee 30s linear infinite; }
 
 .text-gradient-animated {

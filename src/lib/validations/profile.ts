@@ -31,12 +31,31 @@ export const profileUpdateSchema = z.object({
     .max(10)
     .optional(),
   favoriteArtists: z.array(z.string().max(50)).max(20).optional(),
-  cursorEffect: z.enum(["none", "sparkles", "hearts", "stars", "bubbles"]).optional(),
+  cursorEffect: z
+    .enum([
+      "none",
+      "sparkles",
+      "hearts",
+      "stars",
+      "bubbles",
+      "neon",
+      "matrix",
+      "fire",
+      "lightning",
+      "skulls",
+      "smoke",
+      "frost",
+      "vortex",
+    ])
+    .optional(),
   glitter: z.boolean().optional(),
+  bgEffect: z
+    .enum(["none", "glitter", "starfield", "aurora", "grid", "embers", "snow", "rain", "nebula"])
+    .optional(),
   stickers: z
     .array(
       z.object({
-        emoji: z.string().max(8),
+        emoji: z.string().max(12),
         x: z.number().min(0).max(100),
         y: z.number().min(0).max(100),
       }),

@@ -154,7 +154,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       }}
     >
       {hasBgImage && <div className="pointer-events-none fixed inset-0 bg-black/55" />}
-      <ProfileFlair effect={user.profile.cursorEffect} glitter={user.profile.glitter} stickers={stickers} />
+      <ProfileFlair effect={user.profile.cursorEffect} glitter={user.profile.glitter} bgEffect={user.profile.bgEffect} stickers={stickers} />
       <div className={`relative mx-auto max-w-3xl px-6 py-12 ${hasBgImage ? "text-white" : ""}`}>
         {/* Cover */}
         <div
