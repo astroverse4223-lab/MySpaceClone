@@ -49,7 +49,8 @@ export default function ConversationPage() {
 
     function onMessage(message: ChatMessage) {
       if (message.conversationId === id) {
-        setMessages((prev) => [...prev, message]);
+        // Dedupe: the sender already appended this optimistically on send.
+        setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
         fetch(`/api/conversations/${id}/read`, { method: "POST" });
       }
     }
@@ -126,11 +127,18 @@ export default function ConversationPage() {
     if (!content.trim()) return;
     const body = content;
     setContent("");
-    await fetch(`/api/conversations/${id}/messages`, {
+    const res = await fetch(`/api/conversations/${id}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: body }),
     });
+    if (res.ok) {
+      // Show our own message immediately instead of waiting for the socket echo,
+      // which may be delayed or dropped (e.g. multi-instance hosting). The
+      // socket handler dedupes by id, so an echo won't double it up.
+      const { message } = await res.json();
+      setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
+    }
   }
 
   return (
