@@ -57,7 +57,7 @@ export default function RootLayout({
         <script
           // Apply the saved site theme before paint to avoid a flash of the default theme.
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('site-theme');if(t)document.documentElement.setAttribute('data-theme',t);var r=localStorage.getItem('retro-mode');if(r==='on')document.documentElement.setAttribute('data-retro','on');}catch(e){}`,
+            __html: `try{var t=localStorage.getItem('site-theme');if(t)document.documentElement.setAttribute('data-theme',t);var r=localStorage.getItem('retro-mode');if(r==='on')document.documentElement.setAttribute('data-retro','on');var c=localStorage.getItem('site-cursor');if(c)document.documentElement.setAttribute('data-cursor',c);}catch(e){}`,
           }}
         />
       </head>

@@ -17,12 +17,26 @@ const SITE_THEMES: SiteTheme[] = [
 ];
 
 const STORAGE_KEY = "site-theme";
+const CURSOR_KEY = "site-cursor";
+
+const CURSORS = [
+  { id: "off", name: "Default", emoji: "🖱️" },
+  { id: "sparkle", name: "Sparkle", emoji: "✨" },
+  { id: "fire", name: "Fire", emoji: "🔥" },
+  { id: "lightning", name: "Lightning", emoji: "⚡" },
+  { id: "skull", name: "Skull", emoji: "💀" },
+  { id: "alien", name: "Alien", emoji: "👾" },
+  { id: "rocket", name: "Rocket", emoji: "🚀" },
+  { id: "heart", name: "Heart", emoji: "💜" },
+  { id: "crosshair", name: "Crosshair", emoji: "🎯" },
+];
 
 export function ThemeSwitcher() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("midnight");
   const [retro, setRetro] = useState(false);
   const [bgAnim, setBgAnim] = useState("none");
+  const [cursor, setCursor] = useState("off");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,10 +46,21 @@ export function ThemeSwitcher() {
       else setActive(document.documentElement.getAttribute("data-theme") ?? "midnight");
       setRetro(localStorage.getItem("retro-mode") === "on");
       setBgAnim(localStorage.getItem(BG_STORAGE_KEY) ?? "none");
+      setCursor(localStorage.getItem(CURSOR_KEY) ?? "off");
     } catch {
       /* ignore */
     }
   }, []);
+
+  function chooseCursor(id: string) {
+    setCursor(id);
+    document.documentElement.setAttribute("data-cursor", id);
+    try {
+      localStorage.setItem(CURSOR_KEY, id);
+    } catch {
+      /* ignore */
+    }
+  }
 
   function chooseBg(id: string) {
     setBgAnim(id);
@@ -132,6 +157,25 @@ export function ThemeSwitcher() {
                   <span className="grid h-5 w-5 place-items-center text-base">{b.emoji}</span>
                   {b.name}
                   {bgAnim === b.id && <span className="ml-auto text-xs text-white/50">✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-1 border-t border-white/10 pt-1">
+            <p className="px-2 py-1.5 text-xs font-semibold text-white/50">Cursor 🖱️</p>
+            <div className="grid grid-cols-1 gap-0.5">
+              {CURSORS.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => chooseCursor(c.id)}
+                  className={`flex items-center gap-3 rounded-lg px-2 py-2 text-sm transition hover:bg-white/10 ${
+                    cursor === c.id ? "bg-white/10 text-white" : "text-white/80"
+                  }`}
+                >
+                  <span className="grid h-5 w-5 place-items-center text-base">{c.emoji}</span>
+                  {c.name}
+                  {cursor === c.id && <span className="ml-auto text-xs text-white/50">✓</span>}
                 </button>
               ))}
             </div>

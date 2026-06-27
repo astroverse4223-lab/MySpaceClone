@@ -369,9 +369,6 @@ body {
 [data-retro="on"] :where(body, h1, h2, h3, h4, h5, p, span, a, button, input, textarea, select, label, li, div) {
   font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", cursive !important;
 }
-[data-retro="on"] body {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">✨</text></svg>') 4 4, auto;
-}
 [data-retro="on"] .glass {
   animation: retro-glow 2.5s ease-in-out infinite;
   border-color: rgba(236, 72, 153, 0.4) !important;
@@ -383,3 +380,14 @@ body {
 @media (prefers-reduced-motion: reduce) {
   [data-retro="on"] .glass { animation: none; }
 }
+
+/* ===== Custom mouse cursor (data-cursor on <html>, independent of retro) ===== */
+html[data-cursor="off"] body { cursor: auto; }
+html[data-cursor="crosshair"] body { cursor: crosshair; }
+html[data-cursor="sparkle"] body { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">✨</text></svg>') 4 4, auto; }
+html[data-cursor="fire"] body { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">🔥</text></svg>') 4 4, auto; }
+html[data-cursor="lightning"] body { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">⚡</text></svg>') 4 4, auto; }
+html[data-cursor="skull"] body { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">💀</text></svg>') 4 4, auto; }
+html[data-cursor="alien"] body { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">👾</text></svg>') 4 4, auto; }
+html[data-cursor="heart"] body { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">💜</text></svg>') 4 4, auto; }
+html[data-cursor="rocket"] body { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><text y="22" font-size="22">🚀</text></svg>') 4 4, auto; }
