@@ -50,7 +50,7 @@ export function GifPicker({ onSelect, onClose }: { onSelect: (url: string) => vo
   return (
     <div
       ref={ref}
-      className="absolute bottom-full left-0 z-20 mb-2 w-72 overflow-hidden rounded-xl border border-white/10 bg-black/90 shadow-2xl shadow-black/50 backdrop-blur-xl"
+      className="absolute bottom-full left-0 z-60 mb-2 w-72 overflow-hidden rounded-xl border border-white/10 bg-black/90 shadow-2xl shadow-black/50 backdrop-blur-xl"
     >
       {unconfigured ? (
         <div className="p-3">

@@ -238,7 +238,7 @@ export function PostComposer({
             onChange={onContentChange}
           />
           {(suggestMentions || suggestHashtags) && (
-            <div className="absolute left-0 top-full z-20 mt-1 w-56 overflow-hidden rounded-xl border border-white/10 bg-black/90 backdrop-blur-xl">
+            <div className="absolute left-0 top-full z-60 mt-1 w-56 overflow-hidden rounded-xl border border-white/10 bg-black/90 backdrop-blur-xl">
               {suggestMentions &&
                 mentionResults.map((u) => (
                   <button
@@ -414,7 +414,7 @@ export function PostComposer({
           </button>
 
           {showEmoji && (
-            <div className="absolute bottom-full left-0 z-20 mb-2 grid w-64 grid-cols-8 gap-1 rounded-xl border border-white/10 bg-black/90 p-2 backdrop-blur-xl">
+            <div className="absolute bottom-full left-0 z-60 mb-2 grid w-64 grid-cols-8 gap-1 rounded-xl border border-white/10 bg-black/90 p-2 backdrop-blur-xl">
               {EMOJI_PICK.map((e) => (
                 <button
                   key={e}
@@ -429,7 +429,7 @@ export function PostComposer({
           )}
 
           {showStyles && (
-            <div className="absolute bottom-full left-0 z-20 mb-2 w-44 overflow-hidden rounded-xl border border-white/10 bg-black/90 backdrop-blur-xl">
+            <div className="absolute bottom-full left-0 z-60 mb-2 w-44 overflow-hidden rounded-xl border border-white/10 bg-black/90 backdrop-blur-xl">
               {TEXT_STYLES.map((s) => (
                 <button
                   key={s.id}
