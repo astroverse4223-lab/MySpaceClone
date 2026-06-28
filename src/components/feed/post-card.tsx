@@ -7,6 +7,7 @@ import { timeAgo } from "@/lib/time";
 import { UserAvatar } from "@/components/friends/user-avatar";
 import { CommentSection } from "./comment-section";
 import { RichText } from "@/components/rich-text";
+import { TiltCard } from "@/components/ui/tilt-card";
 import type { SerializedPost } from "./types";
 
 const REACTIONS: { type: string; emoji: string }[] = [
@@ -112,6 +113,7 @@ export function PostCard({
   const totalVotes = voteCounts.reduce((a, b) => a + b, 0);
 
   return (
+    <TiltCard>
     <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
       <div className="flex items-center justify-between">
         <Link href={`/profile/${post.author.username}`} className="flex items-center gap-3">
@@ -156,6 +158,16 @@ export function PostCard({
         <div className="mt-3 overflow-hidden rounded-xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={post.images[0]} alt="" className="max-h-96 w-full object-cover" />
+        </div>
+      )}
+
+      {post.gifUrl && (
+        <div className="relative mt-3 overflow-hidden rounded-xl">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={post.gifUrl} alt="" className="max-h-96 w-full object-cover" />
+          <span className="absolute left-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
+            GIF
+          </span>
         </div>
       )}
 
@@ -225,5 +237,6 @@ export function PostCard({
 
       {showComments && <CommentSection postId={post.id} postAuthorId={post.author.id} />}
     </article>
+    </TiltCard>
   );
 }

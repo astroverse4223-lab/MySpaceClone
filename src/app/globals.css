@@ -135,9 +135,28 @@ body {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
-@keyframes eq {
-  0%, 100% { height: 4px; }
-  50% { height: 14px; }
+@keyframes eq-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+/* Theme-glow shimmer used by skeleton loaders, instead of plain gray pulse */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 25%,
+    color-mix(in srgb, var(--site-accent) 35%, transparent) 50%,
+    rgba(255, 255, 255, 0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
 }
 
 .animate-float-blob { animation: float-blob 18s ease-in-out infinite; }

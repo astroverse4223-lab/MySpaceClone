@@ -2,6 +2,14 @@
 
 import { usePlayer } from "@/lib/player-store";
 
+const BARS = [
+  { h: 9, dur: 0.7, delay: 0 },
+  { h: 16, dur: 0.9, delay: 0.1 },
+  { h: 7, dur: 0.55, delay: 0.05 },
+  { h: 14, dur: 0.8, delay: 0.15 },
+  { h: 11, dur: 0.65, delay: 0.2 },
+];
+
 export function ProfileSongPlayer({
   url,
   title,
@@ -38,12 +46,17 @@ export function ProfileSongPlayer({
         <p className="truncate text-sm font-medium text-white/90">{title || "Profile song"}</p>
       </div>
       {playingThis && (
-        <div className="ml-auto flex items-end gap-0.5">
-          {[0, 1, 2].map((i) => (
+        <div className="ml-auto flex items-end gap-0.5" style={{ height: 16 }}>
+          {BARS.map((b, i) => (
             <span
               key={i}
-              className="w-1 rounded-full bg-[var(--site-accent)]"
-              style={{ height: 14, animation: `eq 0.8s ease-in-out ${i * 0.15}s infinite` }}
+              className="w-1 rounded-full"
+              style={{
+                height: b.h,
+                transformOrigin: "bottom",
+                background: "linear-gradient(to top, var(--site-accent), var(--site-accent-2))",
+                animation: `eq-bar ${b.dur}s ease-in-out ${b.delay}s infinite`,
+              }}
             />
           ))}
         </div>

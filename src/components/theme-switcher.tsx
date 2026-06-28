@@ -125,7 +125,7 @@ export function ThemeSwitcher() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c14]/95 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl">
+        <div className="absolute right-0 top-full mt-2 max-h-[min(70vh,32rem)] w-52 overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#0c0c14]/95 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl">
           <p className="px-2 py-1.5 text-xs font-semibold text-white/50">Site theme 🎨</p>
           <div className="grid grid-cols-1 gap-0.5">
             {SITE_THEMES.map((t) => (

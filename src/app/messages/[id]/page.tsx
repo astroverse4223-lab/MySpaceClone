@@ -10,6 +10,7 @@ import { UserAvatar } from "@/components/friends/user-avatar";
 import { OnlineDot } from "@/components/realtime/online-dot";
 import { PresenceIndicator } from "@/components/realtime/presence-indicator";
 import type { ChatMessage } from "@/components/messages/types";
+import { MessageBubble } from "@/components/messages/message-bubble";
 
 type Participant = {
   id: string;
@@ -170,18 +171,12 @@ export default function ConversationPage() {
             const isMine = m.senderId === session?.user?.id;
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
-                <div
-                  className={`max-w-xs rounded-2xl px-4 py-2 text-sm ${
-                    isMine ? "bg-violet-500 text-white" : "bg-white/10 text-white/90"
-                  }`}
-                >
-                  {m.attachmentUrl && m.attachmentType === "IMAGE" && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.attachmentUrl} alt="" className="mb-1.5 max-h-48 w-full rounded-lg object-cover" />
-                  )}
-                  {m.content}
-                  <p className="mt-1 text-[10px] opacity-60">{timeAgo(m.createdAt)}</p>
-                </div>
+                <MessageBubble mine={isMine} attachmentUrl={m.attachmentUrl} attachmentType={m.attachmentType}>
+                  <div className="px-4 py-2">
+                    {m.content}
+                    <p className="mt-1 text-[10px] opacity-60">{timeAgo(m.createdAt)}</p>
+                  </div>
+                </MessageBubble>
                 {isMine && i === lastMineIndex && lastMineSeen && (
                   <span className="mt-0.5 pr-1 text-[10px] text-white/40">
                     Seen {readByOthersAt ? timeAgo(readByOthersAt) : ""}

@@ -51,5 +51,5 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     }),
   prev: () =>
     set((s) => ({ index: Math.max(0, s.index - 1), isPlaying: true, playToken: s.playToken + 1 })),
-  stop: () => set({ isPlaying: false }),
+  stop: () => set({ queue: [], index: 0, isPlaying: false, playToken: 0 }),
 }));

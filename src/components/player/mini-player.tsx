@@ -10,6 +10,12 @@ function fmt(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+const EQ_BARS = [
+  { h: 7, dur: 0.7, delay: 0 },
+  { h: 12, dur: 0.9, delay: 0.1 },
+  { h: 5, dur: 0.55, delay: 0.05 },
+];
+
 export function MiniPlayer() {
   const { queue, index, isPlaying, playToken, toggle, next, prev, setPlaying, stop } = usePlayer();
   const track = queue[index] ?? null;
@@ -44,6 +50,7 @@ export function MiniPlayer() {
   if (!track) return null;
 
   const hasQueue = queue.length > 1;
+  const pct = duration ? (progress / duration) * 100 : 0;
 
   function seek(e: React.ChangeEvent<HTMLInputElement>) {
     const audio = audioRef.current;
@@ -54,68 +61,91 @@ export function MiniPlayer() {
   }
 
   return (
-    <div className="safe-bottom fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#0c0c14]/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-2.5">
-        <div className="flex items-center gap-1">
-          {hasQueue && (
-            <button onClick={prev} className="grid h-8 w-8 place-items-center rounded-full text-white/70 hover:bg-white/10" aria-label="Previous">
-              ⏮
-            </button>
-          )}
-          <button
-            onClick={toggle}
-            className="gradient-accent grid h-10 w-10 place-items-center rounded-full text-white shadow-lg"
-            aria-label={isPlaying ? "Pause" : "Play"}
-          >
-            {isPlaying ? "❙❙" : "▶"}
-          </button>
-          {hasQueue && (
-            <button onClick={next} className="grid h-8 w-8 place-items-center rounded-full text-white/70 hover:bg-white/10" aria-label="Next">
-              ⏭
-            </button>
-          )}
+    <div className="safe-bottom fixed inset-x-0 bottom-0 z-50 px-3 pb-3">
+      <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c14]/95 shadow-2xl shadow-black/50 backdrop-blur-xl">
+        {/* Seek bar */}
+        <div className="relative h-1.5 w-full bg-white/10">
+          <div className="gradient-accent absolute inset-y-0 left-0" style={{ width: `${pct}%` }} />
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={pct}
+            onChange={seek}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            aria-label="Seek"
+          />
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
+        <div className="flex items-center gap-3 px-3 py-2.5">
+          <div className="gradient-accent relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-white shadow-lg">
+            {isPlaying ? (
+              <div className="flex items-end gap-0.5" style={{ height: 14 }}>
+                {EQ_BARS.map((b, i) => (
+                  <span
+                    key={i}
+                    className="w-1 rounded-full bg-white"
+                    style={{ height: b.h, transformOrigin: "bottom", animation: `eq-bar ${b.dur}s ease-in-out ${b.delay}s infinite` }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <span className="text-base">🎵</span>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-white">{track.title}</p>
-            {track.subtitle && <p className="truncate text-xs text-white/40">{track.subtitle}</p>}
+            <div className="flex items-baseline gap-2">
+              {track.subtitle && <p className="min-w-0 truncate text-xs text-white/40">{track.subtitle}</p>}
+              <span className="ml-auto shrink-0 text-[10px] tabular-nums text-white/40">
+                {fmt(progress)} / {fmt(duration)}
+              </span>
+            </div>
           </div>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="w-9 text-right text-[10px] tabular-nums text-white/40">{fmt(progress)}</span>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={duration ? (progress / duration) * 100 : 0}
-              onChange={seek}
-              className="h-1 flex-1 cursor-pointer accent-[var(--site-accent)]"
-              aria-label="Seek"
-            />
-            <span className="w-9 text-[10px] tabular-nums text-white/40">{fmt(duration)}</span>
+
+          <div className="flex items-center gap-1">
+            {hasQueue && (
+              <button onClick={prev} className="grid h-8 w-8 place-items-center rounded-full text-white/70 hover:bg-white/10" aria-label="Previous">
+                ⏮
+              </button>
+            )}
+            <button
+              onClick={toggle}
+              className="gradient-accent grid h-9 w-9 place-items-center rounded-full text-white shadow-lg"
+              aria-label={isPlaying ? "Pause" : "Play"}
+            >
+              {isPlaying ? "❙❙" : "▶"}
+            </button>
+            {hasQueue && (
+              <button onClick={next} className="grid h-8 w-8 place-items-center rounded-full text-white/70 hover:bg-white/10" aria-label="Next">
+                ⏭
+              </button>
+            )}
           </div>
+
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={volume}
+            onChange={(e) => setVolume(Number(e.target.value))}
+            className="hidden h-1 w-16 cursor-pointer accent-(--site-accent) sm:block"
+            aria-label="Volume"
+            title="Volume"
+          />
+
+          <button
+            type="button"
+            onClick={stop}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"
+            aria-label="Close player"
+            title="Close"
+          >
+            ✕
+          </button>
         </div>
-
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.05}
-          value={volume}
-          onChange={(e) => setVolume(Number(e.target.value))}
-          className="hidden h-1 w-20 cursor-pointer accent-[var(--site-accent)] sm:block"
-          aria-label="Volume"
-          title="Volume"
-        />
-
-        <button
-          onClick={stop}
-          className="grid h-8 w-8 place-items-center rounded-full text-white/50 hover:bg-white/10 hover:text-white"
-          aria-label="Close player"
-          title="Close"
-        >
-          ✕
-        </button>
       </div>
 
       <audio

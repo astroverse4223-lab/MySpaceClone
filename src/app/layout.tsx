@@ -10,6 +10,7 @@ import { Toaster } from "@/components/realtime/toaster";
 import { PwaInstall } from "@/components/pwa-install";
 import { PushNudge } from "@/components/notifications/push-nudge";
 import { AnimatedBackground } from "@/components/animated-background";
+import { PageTransition } from "@/components/page-transition";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -65,7 +66,9 @@ export default function RootLayout({
         <Providers>
           <AnimatedBackground />
           <NavBar />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1">
+            <PageTransition>{children}</PageTransition>
+          </main>
           <MiniPlayer />
           <ChatWidget />
           <RealtimeProvider />

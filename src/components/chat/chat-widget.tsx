@@ -8,6 +8,7 @@ import { useIsOnline } from "@/lib/presence-store";
 import { uploadFile } from "@/lib/use-upload";
 import { timeAgo } from "@/lib/time";
 import type { ConversationSummary, ChatMessage, MessageUser, MessageReaction } from "@/components/messages/types";
+import { MessageBubble } from "@/components/messages/message-bubble";
 
 const REACTION_EMOJIS = ["❤️", "😂", "👍", "🔥", "😮", "😢"];
 
@@ -308,7 +309,7 @@ export function ChatWidget() {
             setOpen(true);
             openConversation(popup);
           }}
-          className="animate-pop-in mb-3 flex w-72 items-center gap-3 rounded-2xl border border-white/10 bg-[#0c0c14]/95 p-3 text-left shadow-2xl shadow-black/50 backdrop-blur-xl"
+          className="animate-pop-in mb-3 flex w-[min(18rem,calc(100vw-2rem))] items-center gap-3 rounded-2xl border border-white/10 bg-[#0c0c14]/95 p-3 text-left shadow-2xl shadow-black/50 backdrop-blur-xl"
         >
           <Avatar user={popup.participants[0]} />
           <div className="min-w-0">
@@ -320,7 +321,7 @@ export function ChatWidget() {
 
       {/* Panel */}
       {open && (
-        <div className="mb-3 flex h-[460px] w-80 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c14]/95 shadow-2xl shadow-black/50 backdrop-blur-xl sm:w-96">
+        <div className="mb-3 flex h-[min(460px,70vh)] w-[min(20rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c14]/95 shadow-2xl shadow-black/50 backdrop-blur-xl sm:w-96">
           {view === "list" ? (
             <>
               <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
@@ -407,21 +408,13 @@ export function ChatWidget() {
                       isLastMine && readByOthersAt && new Date(m.createdAt) <= new Date(readByOthersAt);
                     return (
                       <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
-                        <div className={`flex items-center gap-1 ${mine ? "flex-row-reverse" : ""}`}>
-                          <div
-                            className={`max-w-[75%] overflow-hidden rounded-2xl text-sm ${
-                              mine ? "gradient-accent text-white" : "bg-white/10 text-white/90"
-                            }`}
-                          >
-                            {m.attachmentUrl && m.attachmentType === "IMAGE" && (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={m.attachmentUrl} alt="" className="max-h-48 w-full object-cover" />
-                            )}
+                        <div className={`group flex items-center gap-1 ${mine ? "flex-row-reverse" : ""}`}>
+                          <MessageBubble mine={mine} attachmentUrl={m.attachmentUrl} attachmentType={m.attachmentType}>
                             {m.content && <p className="px-3 py-2">{m.content}</p>}
-                          </div>
+                          </MessageBubble>
                           <button
                             onClick={() => setReactOpenId((id) => (id === m.id ? null : m.id))}
-                            className="text-xs text-white/30 transition hover:text-white/70"
+                            className="text-xs text-white/30 opacity-0 transition group-hover:opacity-100 hover:text-white/70"
                             aria-label="React"
                           >
                             ☺

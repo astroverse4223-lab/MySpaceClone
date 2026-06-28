@@ -10,6 +10,7 @@ import { ProfileFlair } from "@/components/profile/profile-flair";
 import { Guestbook } from "@/components/profile/guestbook";
 import { ProfilePosts } from "@/components/feed/profile-posts";
 import { OnlineDot } from "@/components/realtime/online-dot";
+import { TiltCard } from "@/components/ui/tilt-card";
 import { serializePosts } from "@/lib/posts";
 import type { SerializedPost } from "@/components/feed/types";
 import { getTheme, getFontStack } from "@/lib/themes";
@@ -157,16 +158,18 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       <ProfileFlair effect={user.profile.cursorEffect} glitter={user.profile.glitter} bgEffect={user.profile.bgEffect} stickers={stickers} />
       <div className={`relative mx-auto max-w-3xl px-6 py-12 ${hasBgImage ? "text-white" : ""}`}>
         {/* Cover */}
-        <div
-          className="h-44 w-full rounded-2xl bg-cover bg-center shadow-xl"
-          style={{
-            backgroundImage: user.profile.coverImage ? `url(${user.profile.coverImage})` : undefined,
-            background: user.profile.coverImage ? undefined : `linear-gradient(135deg, ${accent}, transparent)`,
-          }}
-        />
+        <TiltCard className="block">
+          <div
+            className="h-44 w-full rounded-2xl bg-cover bg-center shadow-xl"
+            style={{
+              backgroundImage: user.profile.coverImage ? `url(${user.profile.coverImage})` : undefined,
+              background: user.profile.coverImage ? undefined : `linear-gradient(135deg, ${accent}, transparent)`,
+            }}
+          />
+        </TiltCard>
 
         {/* Identity */}
-        <div className="flex flex-wrap items-end justify-between gap-3 px-2">
+        <div className="relative z-10 flex flex-wrap items-end justify-between gap-3 px-2">
           <div className="-mt-12 flex items-end gap-4">
             <div
               className="flex h-28 w-28 items-center justify-center rounded-full border-4 bg-white/10 bg-cover bg-center text-4xl font-semibold shadow-2xl"

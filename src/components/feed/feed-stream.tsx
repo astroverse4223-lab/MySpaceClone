@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PostComposer } from "@/components/feed/post-composer";
 import { PostCard } from "@/components/feed/post-card";
 import { StoriesBar } from "@/components/stories/stories-bar";
+import { PostCardSkeleton } from "@/components/ui/skeleton";
 import type { SerializedPost } from "@/components/feed/types";
 
 export function FeedStream() {
@@ -70,17 +71,7 @@ export function FeedStream() {
         {initialLoading ? (
           <div className="space-y-4">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="glass animate-pulse rounded-2xl p-5">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-white/10" />
-                  <div className="space-y-2">
-                    <div className="h-3 w-32 rounded bg-white/10" />
-                    <div className="h-2 w-20 rounded bg-white/10" />
-                  </div>
-                </div>
-                <div className="mt-4 h-3 w-full rounded bg-white/10" />
-                <div className="mt-2 h-3 w-2/3 rounded bg-white/10" />
-              </div>
+              <PostCardSkeleton key={i} />
             ))}
           </div>
         ) : posts.length === 0 ? (
