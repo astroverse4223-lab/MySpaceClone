@@ -8,6 +8,11 @@ WORKDIR /app
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# prisma generate / next build only need the schema to be syntactically
+# valid — they never connect to this. The real DATABASE_URL is supplied at
+# runtime by Railway. (Routes that query the DB, e.g. sitemap.ts, are
+# force-dynamic so next build doesn't try to hit the database either.)
+ENV DATABASE_URL="postgresql://user:password@localhost:5432/db"
 RUN npx prisma generate
 RUN npm run build
 
