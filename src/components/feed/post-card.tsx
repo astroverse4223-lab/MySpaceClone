@@ -2,6 +2,28 @@
 
 import { useState } from "react";
 import Link from "next/link";
+
+function VideoPlayer({ src }: { src: string }) {
+  const [errored, setErrored] = useState(false);
+  if (errored) {
+    return (
+      <div className="mt-3 flex items-center justify-center rounded-xl bg-white/5 py-8 text-center text-sm text-white/50">
+        <span>Video format not supported by your browser.<br />Re-encode as H.264 MP4 or WebM.</span>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-3 overflow-hidden rounded-xl bg-black">
+      <video
+        src={`${src}#t=0.001`}
+        className="max-h-128 w-full object-contain"
+        controls
+        preload="metadata"
+        onError={() => setErrored(true)}
+      />
+    </div>
+  );
+}
 import { useSession } from "next-auth/react";
 import { timeAgo } from "@/lib/time";
 import { UserAvatar } from "@/components/friends/user-avatar";
@@ -159,6 +181,10 @@ export function PostCard({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={post.images[0]} alt="" className="max-h-96 w-full object-cover" />
         </div>
+      )}
+
+      {post.videoUrl && (
+        <VideoPlayer src={post.videoUrl} />
       )}
 
       {post.gifUrl && (

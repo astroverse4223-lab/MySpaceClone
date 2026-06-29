@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { UserAvatar } from "@/components/friends/user-avatar";
 import { CommentSection } from "./comment-section";
@@ -23,8 +23,31 @@ export function ReelCard({
   onUpdate: (post: SerializedPost) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [showComments, setShowComments] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [videoError, setVideoError] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const container = containerRef.current;
+    if (!video || !container || !post.videoUrl) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+          video.currentTime = 0;
+        }
+      },
+      { threshold: 0.6 },
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [post.videoUrl]);
 
   async function react() {
     const res = await fetch(`/api/posts/${post.id}/react`, {
@@ -58,18 +81,25 @@ export function ReelCard({
   const imageSrc = post.images?.[0] ?? post.gifUrl ?? null;
 
   return (
-    <div className="relative flex h-[calc(100vh-72px)] w-full snap-start items-center justify-center bg-black">
-      {post.videoUrl ? (
+    <div ref={containerRef} className="relative flex h-[calc(100vh-72px)] w-full snap-start items-center justify-center bg-black">
+      {post.videoUrl && !videoError ? (
         <video
           ref={videoRef}
-          src={post.videoUrl}
+          src={`${post.videoUrl}#t=0.001`}
           className="h-full w-full object-contain"
           loop
-          autoPlay
           muted={muted}
           playsInline
+          preload="auto"
           onClick={() => setMuted((m) => !m)}
+          onError={() => setVideoError(true)}
         />
+      ) : post.videoUrl && videoError ? (
+        <div className="flex flex-col items-center justify-center gap-2 text-white/50">
+          <span className="text-4xl">⚠️</span>
+          <p className="text-sm">Video format not supported</p>
+          <p className="text-xs text-white/30">Re-encode as H.264 MP4 or WebM</p>
+        </div>
       ) : imageSrc ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={imageSrc} alt={post.content ?? "Reel"} className="h-full w-full object-contain" />

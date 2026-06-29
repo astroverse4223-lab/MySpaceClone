@@ -37,6 +37,7 @@ export function PostComposer({
   const [hashtagQuery, setHashtagQuery] = useState<string | null>(null);
   const [hashtagResults, setHashtagResults] = useState<{ tag: string; count: number }[]>([]);
   const [imageUrl, setImageUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [gifUrl, setGifUrl] = useState("");
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -148,12 +149,39 @@ export function PostComposer({
     setShowStyles(false);
   }
 
+  function checkBrowserCanPlay(file: File): Promise<boolean> {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const v = document.createElement("video");
+      const done = (ok: boolean) => { URL.revokeObjectURL(url); resolve(ok); };
+      v.oncanplay = () => done(true);
+      v.onerror = () => done(false);
+      setTimeout(() => done(false), 4000);
+      v.preload = "metadata";
+      v.src = url;
+      v.load();
+    });
+  }
+
   async function handleFileSelect(file: File) {
     setError(undefined);
+    if (file.type.startsWith("video/")) {
+      const canPlay = await checkBrowserCanPlay(file);
+      if (!canPlay) {
+        setError("Your browser can't play this video. Re-encode it as H.264 MP4 or WebM and try again.");
+        return;
+      }
+    }
     setUploading(true);
     try {
       const url = await uploadFile(file);
-      setImageUrl(url);
+      if (file.type.startsWith("video/")) {
+        setVideoUrl(url);
+        setImageUrl("");
+      } else {
+        setImageUrl(url);
+        setVideoUrl("");
+      }
       setGifUrl("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -190,13 +218,21 @@ export function PostComposer({
             communityId,
             requiredTierId: requiredTierId || undefined,
           }
-        : {
-            type: imageUrl ? "IMAGE" : "TEXT",
-            content: content || undefined,
-            images: imageUrl ? [imageUrl] : undefined,
-            communityId,
-            requiredTierId: requiredTierId || undefined,
-          };
+        : videoUrl
+          ? {
+              type: "VIDEO",
+              content: content || undefined,
+              videoUrl,
+              communityId,
+              requiredTierId: requiredTierId || undefined,
+            }
+          : {
+              type: imageUrl ? "IMAGE" : "TEXT",
+              content: content || undefined,
+              images: imageUrl ? [imageUrl] : undefined,
+              communityId,
+              requiredTierId: requiredTierId || undefined,
+            };
 
     const res = await fetch("/api/posts", {
       method: "POST",
@@ -215,6 +251,7 @@ export function PostComposer({
     onPosted(json.post);
     setContent("");
     setImageUrl("");
+    setVideoUrl("");
     setGifUrl("");
     setShowPoll(false);
     setPollOptions(["", ""]);
@@ -272,6 +309,9 @@ export function PostComposer({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={imageUrl} alt="" className="mt-3 max-h-64 w-full rounded-xl object-cover" />
       )}
+      {!showPoll && videoUrl && (
+        <video src={`${videoUrl}#t=0.001`} className="mt-3 max-h-64 w-full rounded-xl object-cover" controls muted preload="metadata" />
+      )}
       {!showPoll && gifUrl && (
         <div className="relative mt-3 overflow-hidden rounded-xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -281,11 +321,12 @@ export function PostComposer({
           </span>
         </div>
       )}
-      {(imageUrl || gifUrl) && !showPoll && (
+      {(imageUrl || videoUrl || gifUrl) && !showPoll && (
         <button
           type="button"
           onClick={() => {
             setImageUrl("");
+            setVideoUrl("");
             setGifUrl("");
           }}
           className="mt-2 text-xs text-white/40 hover:text-white/70"
@@ -341,18 +382,18 @@ export function PostComposer({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
+            accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
             className="hidden"
             onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
           />
           <button
             type="button"
-            title="Add photo"
+            title="Add photo or video"
             onClick={() => !showPoll && fileInputRef.current?.click()}
             disabled={uploading || showPoll}
             className="grid h-9 w-9 place-items-center rounded-full text-lg text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
           >
-            {uploading ? "…" : "📷"}
+            {uploading ? "…" : videoUrl ? "🎬" : "📷"}
           </button>
 
           <button
