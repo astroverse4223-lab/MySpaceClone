@@ -47,6 +47,16 @@ export default function MessagesPage() {
     }
   }
 
+  async function deleteConversation(e: React.MouseEvent, conversationId: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!window.confirm("Delete this conversation? This can't be undone.")) return;
+    const res = await fetch(`/api/conversations/${conversationId}`, { method: "DELETE" });
+    if (res.ok) {
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+    }
+  }
+
   return (
     <div className="mx-auto max-w-xl px-6 py-12">
       <h1 className="text-2xl font-semibold">Messages</h1>
@@ -87,7 +97,7 @@ export default function MessagesPage() {
               <Link
                 key={c.id}
                 href={`/messages/${c.id}`}
-                className="flex items-center justify-between rounded-xl px-3 py-3 hover:bg-white/5"
+                className="group flex items-center justify-between rounded-xl px-3 py-3 hover:bg-white/5"
               >
                 <div className="flex items-center gap-3">
                   <div className="relative">
@@ -104,7 +114,17 @@ export default function MessagesPage() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  {c.lastMessage && <span className="text-[10px] text-white/30">{timeAgo(c.lastMessage.createdAt)}</span>}
+                  <div className="flex items-center gap-2">
+                    {c.lastMessage && <span className="text-[10px] text-white/30">{timeAgo(c.lastMessage.createdAt)}</span>}
+                    <button
+                      type="button"
+                      title="Delete conversation"
+                      onClick={(e) => deleteConversation(e, c.id)}
+                      className="rounded-full p-1 text-xs text-white/0 transition hover:bg-white/10 hover:text-red-300 group-hover:text-white/40"
+                    >
+                      ✕
+                    </button>
+                  </div>
                   {c.unread && <span className="h-2 w-2 rounded-full bg-violet-400" />}
                 </div>
               </Link>

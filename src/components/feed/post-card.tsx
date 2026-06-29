@@ -114,7 +114,7 @@ export function PostCard({
 
   return (
     <TiltCard>
-    <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <article className="glass rounded-2xl p-4">
       <div className="flex items-center justify-between">
         <Link href={`/profile/${post.author.username}`} className="flex items-center gap-3">
           <UserAvatar name={post.author.name ?? post.author.username} image={post.author.image} />

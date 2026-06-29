@@ -225,7 +225,7 @@ export function PostComposer({
   const suggestHashtags = !suggestMentions && hashtagQuery !== null && hashtagResults.length > 0;
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div className="glass rounded-2xl p-4">
       <div className="flex gap-3">
         <UserAvatar name={session?.user?.name ?? session?.user?.username ?? "?"} image={session?.user?.image} size={40} />
         <div className="relative min-w-0 flex-1">

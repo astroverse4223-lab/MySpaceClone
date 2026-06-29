@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { getSocket } from "@/lib/socket-client";
 import { timeAgo } from "@/lib/time";
+import { uploadFile } from "@/lib/use-upload";
 import { UserAvatar } from "@/components/friends/user-avatar";
 import { OnlineDot } from "@/components/realtime/online-dot";
 import { PresenceIndicator } from "@/components/realtime/presence-indicator";
+import { GifPicker } from "@/components/feed/gif-picker";
 import type { ChatMessage } from "@/components/messages/types";
 import { MessageBubble } from "@/components/messages/message-bubble";
 
@@ -22,6 +24,7 @@ type Participant = {
 
 export default function ConversationPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const { data: session } = useSession();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -29,7 +32,12 @@ export default function ConversationPage() {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [typingUser, setTypingUser] = useState<string | null>(null);
+  const [attachment, setAttachment] = useState<{ url: string; type: "IMAGE" } | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
@@ -125,13 +133,19 @@ export default function ConversationPage() {
   }
 
   async function send() {
-    if (!content.trim()) return;
+    if (!content.trim() && !attachment) return;
     const body = content;
+    const sentAttachment = attachment;
     setContent("");
+    setAttachment(null);
     const res = await fetch(`/api/conversations/${id}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: body }),
+      body: JSON.stringify({
+        content: body || undefined,
+        attachmentUrl: sentAttachment?.url,
+        attachmentType: sentAttachment?.type,
+      }),
     });
     if (res.ok) {
       // Show our own message immediately instead of waiting for the socket echo,
@@ -142,6 +156,34 @@ export default function ConversationPage() {
     }
   }
 
+  async function handleFileSelect(file: File) {
+    setUploading(true);
+    try {
+      const url = await uploadFile(file);
+      setAttachment({ url, type: "IMAGE" });
+    } catch {
+      // upload errors are non-fatal here; user can just retry
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function attachGif(url: string) {
+    setAttachment({ url, type: "IMAGE" });
+    setShowGifPicker(false);
+  }
+
+  async function deleteConversation() {
+    if (!window.confirm("Delete this conversation? This can't be undone.")) return;
+    setDeleting(true);
+    const res = await fetch(`/api/conversations/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      router.push("/messages");
+    } else {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="mx-auto flex h-[calc(100vh-72px)] max-w-xl flex-col px-6 py-6">
       <Link href="/messages" className="text-sm text-white/50 hover:text-white">
@@ -149,17 +191,28 @@ export default function ConversationPage() {
       </Link>
 
       {other && (
-        <div className="mt-3 flex items-center gap-3 border-b border-white/10 pb-3">
-          <div className="relative">
-            <UserAvatar name={other.name ?? other.username} image={other.image} size={40} />
-            <OnlineDot userId={other.id} className="absolute bottom-0 right-0 h-3 w-3" />
+        <div className="mt-3 flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <UserAvatar name={other.name ?? other.username} image={other.image} size={40} />
+              <OnlineDot userId={other.id} className="absolute bottom-0 right-0 h-3 w-3" />
+            </div>
+            <div>
+              <Link href={`/profile/${other.username}`} className="text-sm font-semibold hover:underline">
+                {other.name ?? other.username}
+              </Link>
+              <PresenceIndicator userId={other.id} initialLastSeen={other.lastSeenAt} />
+            </div>
           </div>
-          <div>
-            <Link href={`/profile/${other.username}`} className="text-sm font-semibold hover:underline">
-              {other.name ?? other.username}
-            </Link>
-            <PresenceIndicator userId={other.id} initialLastSeen={other.lastSeenAt} />
-          </div>
+          <button
+            type="button"
+            title="Delete conversation"
+            onClick={deleteConversation}
+            disabled={deleting}
+            className="rounded-full px-2.5 py-1.5 text-xs text-white/40 transition hover:bg-white/10 hover:text-red-300 disabled:opacity-40"
+          >
+            {deleting ? "Deleting…" : "Delete"}
+          </button>
         </div>
       )}
 
@@ -190,7 +243,48 @@ export default function ConversationPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="mt-4 flex gap-2">
+      {attachment && (
+        <div className="relative mt-2 inline-block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={attachment.url} alt="" className="max-h-32 rounded-xl object-cover" />
+          <button
+            type="button"
+            onClick={() => setAttachment(null)}
+            className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-black/80 text-xs text-white/70 hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      <div className="relative mt-4 flex items-center gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          className="hidden"
+          onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+        />
+        <button
+          type="button"
+          title="Add photo"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-lg text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
+        >
+          {uploading ? "…" : "📷"}
+        </button>
+        <button
+          type="button"
+          title="Add GIF"
+          onClick={() => setShowGifPicker((v) => !v)}
+          className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold text-white/60 transition hover:bg-white/10 hover:text-white ${
+            showGifPicker ? "bg-white/10 text-white" : ""
+          }`}
+        >
+          GIF
+        </button>
+        {showGifPicker && <GifPicker onSelect={attachGif} onClose={() => setShowGifPicker(false)} />}
         <input
           className="flex-1 rounded-full border border-white/10 bg-black/30 px-4 py-2.5 text-sm outline-none focus:border-violet-400/60"
           placeholder="Type a message..."

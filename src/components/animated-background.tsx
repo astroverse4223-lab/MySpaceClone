@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 type Bubble = { key: number; left: string; size: number; duration: string; delay: string };
+type Meteor = { key: number; top: string; left: string; duration: string; delay: string };
+type Confetto = { key: number; left: string; size: number; color: "1" | "2"; duration: string; delay: string };
 
 function makeBubbles(): Bubble[] {
   return Array.from({ length: 14 }, (_, i) => {
@@ -18,6 +20,27 @@ function makeBubbles(): Bubble[] {
   });
 }
 
+function makeMeteors(): Meteor[] {
+  return Array.from({ length: 10 }, (_, i) => ({
+    key: i,
+    top: `${Math.round(Math.random() * 50)}%`,
+    left: `${Math.round(Math.random() * 100)}%`,
+    duration: `${4 + Math.round(Math.random() * 5)}s`,
+    delay: `-${Math.round(Math.random() * 8)}s`,
+  }));
+}
+
+function makeConfetti(): Confetto[] {
+  return Array.from({ length: 30 }, (_, i) => ({
+    key: i,
+    left: `${Math.round(Math.random() * 100)}%`,
+    size: 6 + Math.round(Math.random() * 8),
+    color: Math.random() > 0.5 ? "1" : "2",
+    duration: `${6 + Math.round(Math.random() * 8)}s`,
+    delay: `-${Math.round(Math.random() * 12)}s`,
+  }));
+}
+
 export const BG_STORAGE_KEY = "bg-animation";
 export const BG_CHANGE_EVENT = "bg-animation-change";
 
@@ -27,13 +50,18 @@ export const BG_ANIMATIONS = [
   { id: "aurora", name: "Aurora", emoji: "🌌" },
   { id: "stars", name: "Starfield", emoji: "✨" },
   { id: "bubbles", name: "Bubbles", emoji: "🫧" },
+  { id: "meteors", name: "Meteors", emoji: "☄️" },
+  { id: "confetti", name: "Confetti", emoji: "🎊" },
+  { id: "waves", name: "Waves", emoji: "🌊" },
 ] as const;
 
 export function AnimatedBackground() {
   const pathname = usePathname();
   const [bg, setBg] = useState("none");
-  // Random-but-stable particle set for the bubbles animation, built on the client.
+  // Random-but-stable particle sets, built on the client to avoid SSR/CSR mismatch.
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
+  const [meteors, setMeteors] = useState<Meteor[]>([]);
+  const [confetti, setConfetti] = useState<Confetto[]>([]);
 
   useEffect(() => {
     try {
@@ -42,6 +70,8 @@ export function AnimatedBackground() {
       /* ignore */
     }
     setBubbles(makeBubbles());
+    setMeteors(makeMeteors());
+    setConfetti(makeConfetti());
     const onChange = (e: Event) => setBg((e as CustomEvent<string>).detail ?? "none");
     window.addEventListener(BG_CHANGE_EVENT, onChange as EventListener);
     return () => window.removeEventListener(BG_CHANGE_EVENT, onChange as EventListener);
@@ -88,6 +118,38 @@ export function AnimatedBackground() {
             }}
           />
         ))}
+
+      {bg === "meteors" &&
+        meteors.map((m) => (
+          <span
+            key={m.key}
+            className="bg-meteor"
+            style={{
+              top: m.top,
+              left: m.left,
+              animationDuration: m.duration,
+              animationDelay: m.delay,
+            }}
+          />
+        ))}
+
+      {bg === "confetti" &&
+        confetti.map((c) => (
+          <span
+            key={c.key}
+            className="bg-confetti"
+            style={{
+              left: c.left,
+              width: c.size,
+              height: c.size * 0.4,
+              background: c.color === "1" ? "var(--site-accent)" : "var(--site-accent-2)",
+              animationDuration: c.duration,
+              animationDelay: c.delay,
+            }}
+          />
+        ))}
+
+      {bg === "waves" && <div className="bg-waves" />}
     </div>
   );
 }
