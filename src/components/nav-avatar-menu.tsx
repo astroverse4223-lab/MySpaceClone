@@ -14,6 +14,7 @@ const MORE_LINKS = [
   { href: "/blog", label: "Blog", icon: "✍️" },
   { href: "/events", label: "Events", icon: "📅" },
   { href: "/playlists", label: "Playlists", icon: "🎵" },
+  { href: "/donate", label: "Donate", icon: "💜" },
 ];
 
 export { MORE_LINKS };

@@ -35,6 +35,16 @@ export async function POST(request: Request) {
               typeof checkoutSession.payment_intent === "string" ? checkoutSession.payment_intent : undefined,
           },
         });
+      } else if (metadata.type === "donation") {
+        await prisma.donation.create({
+          data: {
+            donorId: metadata.donorId || undefined,
+            amountCents: checkoutSession.amount_total ?? 0,
+            message: metadata.message || undefined,
+            stripePaymentIntentId:
+              typeof checkoutSession.payment_intent === "string" ? checkoutSession.payment_intent : undefined,
+          },
+        });
       } else if (metadata.tierId && checkoutSession.subscription) {
         await prisma.subscription.upsert({
           where: { subscriberId_creatorId: { subscriberId: metadata.subscriberId, creatorId: metadata.creatorId } },

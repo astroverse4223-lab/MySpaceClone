@@ -86,7 +86,7 @@ export function PushNudge() {
       <button
         onClick={turnOn}
         disabled={busy}
-        className="mt-3 w-full rounded-xl bg-gradient-to-r from-violet-400 to-pink-400 px-4 py-2 text-sm font-bold text-black transition hover:opacity-90 disabled:opacity-60"
+        className="mt-3 w-full rounded-xl bg-linear-to-r from-violet-400 to-pink-400 px-4 py-2 text-sm font-bold text-black transition hover:opacity-90 disabled:opacity-60"
       >
         {busy ? "Enabling…" : "Enable notifications"}
       </button>

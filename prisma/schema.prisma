@@ -73,6 +73,7 @@ model User {
   subscriptionsAsCreator    Subscription[]  @relation("CreatorSubscribers")
   tipsSent                 Tip[]            @relation("TipsSent")
   tipsReceived              Tip[]            @relation("TipsReceived")
+  donations                 Donation[]       @relation("DonationsSent")
 
   reportsFiled   Report[]    @relation("ReportsFiled")
   reportsResolved Report[]   @relation("ReportsResolved")
@@ -719,6 +720,19 @@ model Tip {
 
   sender  User @relation("TipsSent", fields: [senderId], references: [id], onDelete: Cascade)
   creator User @relation("TipsReceived", fields: [creatorId], references: [id], onDelete: Cascade)
+}
+
+// Site-wide donations (supporting the platform itself, not a specific creator).
+// Unlike Tip, there's no payout destination required — funds stay with the platform.
+model Donation {
+  id                    String   @id @default(cuid())
+  donorId               String?
+  amountCents           Int
+  message               String?
+  stripePaymentIntentId String?
+  createdAt             DateTime @default(now())
+
+  donor User? @relation("DonationsSent", fields: [donorId], references: [id], onDelete: SetNull)
 }
 
 // =====================================================================
