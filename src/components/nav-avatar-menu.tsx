@@ -9,6 +9,7 @@ const MORE_LINKS = [
   { href: "/explore", label: "Explore", icon: "🧭" },
   { href: "/communities", label: "Communities", icon: "🏛️" },
   { href: "/reels", label: "Reels", icon: "🎬" },
+  { href: "/marketplace", label: "Marketplace", icon: "🛒" },
   { href: "/games", label: "Games", icon: "🎮" },
   { href: "/blog", label: "Blog", icon: "✍️" },
   { href: "/events", label: "Events", icon: "📅" },

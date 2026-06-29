@@ -13,6 +13,7 @@ const QUICK_LINKS = [
   { href: "/friends", label: "Friends", emoji: "🫂" },
   { href: "/messages", label: "Messages", emoji: "✉️" },
   { href: "/communities", label: "Communities", emoji: "🏛️" },
+  { href: "/marketplace", label: "Marketplace", emoji: "🛒" },
   { href: "/events", label: "Events", emoji: "📅" },
   { href: "/reels", label: "Reels", emoji: "🎬" },
   { href: "/games", label: "Games", emoji: "🎮" },
@@ -27,7 +28,7 @@ export default async function FeedPage() {
   }
   const me = session.user.id;
 
-  const [profile, friendCount, badgeCount, relationships, upcomingEvents, myMemberships, friendRels] = await Promise.all([
+  const [profile, friendCount, badgeCount, relationships, upcomingEvents, latestListings, myMemberships, friendRels] = await Promise.all([
     prisma.profile.findUnique({ where: { userId: me } }),
     prisma.friendship.count({ where: { status: "ACCEPTED", OR: [{ requesterId: me }, { addresseeId: me }] } }),
     prisma.userBadge.count({ where: { userId: me } }),
@@ -40,6 +41,12 @@ export default async function FeedPage() {
       orderBy: { startsAt: "asc" },
       take: 3,
       select: { id: true, title: true, startsAt: true, isOnline: true, location: true },
+    }),
+    prisma.listing.findMany({
+      where: { status: "ACTIVE" },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+      select: { id: true, title: true, priceCents: true, images: true },
     }),
     prisma.communityMember.findMany({
       where: { userId: me },
@@ -280,6 +287,39 @@ export default async function FeedPage() {
                         {" · "}
                         {e.isOnline ? "Online" : e.location ?? "In person"}
                       </p>
+                    </Link>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="glass rounded-2xl p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Marketplace 🛒</h3>
+                <Link href="/marketplace" className="text-xs text-white/40 hover:text-white/70">
+                  All
+                </Link>
+              </div>
+              <div className="mt-3 space-y-2">
+                {latestListings.length === 0 ? (
+                  <p className="text-xs text-white/40">No listings yet. Sell something!</p>
+                ) : (
+                  latestListings.map((l) => (
+                    <Link
+                      key={l.id}
+                      href={`/marketplace/${l.id}`}
+                      className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 transition hover:bg-white/10"
+                    >
+                      <span
+                        className="h-8 w-8 shrink-0 rounded-lg bg-cover bg-center bg-white/10"
+                        style={{ backgroundImage: l.images[0] ? `url(${l.images[0]})` : undefined }}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{l.title}</p>
+                        <p className="text-xs text-white/40">
+                          {l.priceCents === 0 ? "Free" : `$${(l.priceCents / 100).toLocaleString()}`}
+                        </p>
+                      </span>
                     </Link>
                   ))
                 )}
