@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { FeedStream } from "@/components/feed/feed-stream";
+import { BulletinBanner } from "@/components/feed/bulletin-banner";
 import { SuggestedPeople } from "@/components/feed/suggested-people";
 import { TrendingTags } from "@/components/feed/trending-tags";
 import { getTheme } from "@/lib/themes";
@@ -172,6 +173,7 @@ export default async function FeedPage() {
         {/* Center stream */}
         <main className="min-w-0">
           <h1 className="mb-2 text-2xl font-bold">Your Feed</h1>
+          <BulletinBanner />
           <FeedStream />
         </main>
 

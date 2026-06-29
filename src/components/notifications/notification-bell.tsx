@@ -152,7 +152,15 @@ export function NotificationBell() {
                   </div>
                 );
                 return n.link ? (
-                  <Link key={n.id} href={n.link} onClick={() => setOpen(false)} className="block">
+                  <Link
+                    key={n.id}
+                    href={n.link}
+                    onClick={() => {
+                      setOpen(false);
+                      dismiss(n.id);
+                    }}
+                    className="block"
+                  >
                     {inner}
                   </Link>
                 ) : (

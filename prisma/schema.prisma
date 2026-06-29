@@ -99,6 +99,7 @@ model User {
   pushSubscriptions     PushSubscription[]
 
   listings              Listing[]
+  bulletins             Bulletin[]
 }
 
 enum Role {
@@ -818,6 +819,28 @@ model Notification {
   actor User? @relation("NotificationsActed", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([userId, read, createdAt])
+}
+
+enum BulletinType {
+  FEATURE
+  MAINTENANCE
+  UPDATE
+  GENERAL
+}
+
+model Bulletin {
+  id        String       @id @default(cuid())
+  title     String
+  body      String
+  type      BulletinType @default(UPDATE)
+  link      String?
+  pinned    Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  authorId  String
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
 }
 
 model ProfileView {

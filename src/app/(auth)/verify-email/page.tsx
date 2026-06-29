@@ -5,6 +5,12 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AuthCard, FormError, FormSuccess } from "@/components/auth/auth-card";
 
+// Module-level, not component state: React Strict Mode's dev double-invoke
+// actually unmounts and remounts the component (resetting refs/state), so a
+// guard living inside the component doesn't survive it. This does, since it
+// isn't tied to the component's lifecycle at all.
+const requestedTokens = new Set<string>();
+
 export default function VerifyEmailPage() {
   return (
     <Suspense>
@@ -25,6 +31,8 @@ function VerifyEmailContent() {
       setError("Missing verification token.");
       return;
     }
+    if (requestedTokens.has(token)) return;
+    requestedTokens.add(token);
 
     fetch("/api/auth/verify-email", {
       method: "POST",

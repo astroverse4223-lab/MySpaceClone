@@ -12,9 +12,12 @@ export const grantBadgeSchema = z.object({
   action: z.enum(["grant", "remove"]).default("grant"),
 });
 
-export const broadcastSchema = z.object({
-  message: z.string().min(1).max(500),
+export const createBulletinSchema = z.object({
+  title: z.string().min(1).max(120),
+  body: z.string().min(1).max(1000),
+  type: z.enum(["FEATURE", "MAINTENANCE", "UPDATE", "GENERAL"]).default("UPDATE"),
   link: z.string().max(500).optional(),
+  pinned: z.boolean().optional(),
 });
 
 export const createReportSchema = z.object({
