@@ -6,20 +6,20 @@ import { auth } from "@/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { isR2Configured, uploadToR2 } from "@/lib/storage";
 
+// Audio types intentionally excluded — profile songs use Spotify/YouTube/
+// SoundCloud embeds instead of self-hosted files, to avoid hosting
+// copyrighted audio ourselves. See /dmca.
 const ALLOWED_TYPES: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",
   "image/gif": "gif",
-  "audio/mpeg": "mp3",
-  "audio/ogg": "ogg",
-  "audio/wav": "wav",
   "video/mp4": "mp4",
   "video/webm": "webm",
   "video/quicktime": "mov",
 };
 
-// Images/audio stay small; videos may be larger.
+// Images stay small; videos may be larger.
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 

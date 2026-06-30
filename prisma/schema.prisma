@@ -77,6 +77,7 @@ model User {
 
   reportsFiled   Report[]    @relation("ReportsFiled")
   reportsResolved Report[]   @relation("ReportsResolved")
+  dmcaResolved   DmcaRequest[] @relation("DmcaResolved")
   auditLogs      AuditLog[]
 
   guestbookReceived     GuestbookEntry[] @relation("GuestbookReceived")
@@ -766,6 +767,35 @@ model Report {
 
   reporter   User  @relation("ReportsFiled", fields: [reporterId], references: [id], onDelete: Cascade)
   resolvedBy User? @relation("ReportsResolved", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+}
+
+enum DmcaContentType {
+  PROFILE_SONG
+  PLAYLIST_TRACK
+  POST
+  OTHER
+}
+
+// Copyright takedown notices submitted via /dmca. No login required to file
+// one (real-world rights holders rarely have an account on the site), so
+// there's no reporter relation — just the complainant's own contact info.
+model DmcaRequest {
+  id                 String          @id @default(cuid())
+  complainantName    String
+  complainantEmail   String
+  contentType        DmcaContentType
+  contentUrl         String          @db.Text
+  targetUsername     String?
+  description        String          @db.Text
+  signature          String
+  status             ReportStatus    @default(PENDING)
+  resolvedById       String?
+  createdAt          DateTime        @default(now())
+  resolvedAt         DateTime?
+
+  resolvedBy User? @relation("DmcaResolved", fields: [resolvedById], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
 }

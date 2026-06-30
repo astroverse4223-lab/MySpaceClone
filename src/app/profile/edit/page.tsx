@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { uploadFile } from "@/lib/use-upload";
 import { THEMES, THEME_IDS, FONTS, FONT_IDS, getFontStack } from "@/lib/themes";
+import { parseMusicEmbed } from "@/lib/music-embed";
 
 interface ProfileForm {
   displayName: string;
@@ -24,7 +25,6 @@ interface ProfileForm {
   coverImage: string;
   backgroundImage: string;
   profileSongUrl: string;
-  profileSongTitle: string;
   cursorEffect: string;
   glitter: boolean;
   bgEffect: string;
@@ -49,7 +49,6 @@ const EMPTY_FORM: ProfileForm = {
   coverImage: "",
   backgroundImage: "",
   profileSongUrl: "",
-  profileSongTitle: "",
   cursorEffect: "none",
   glitter: false,
   bgEffect: "none",
@@ -104,7 +103,6 @@ export default function EditProfilePage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const backgroundInputRef = useRef<HTMLInputElement>(null);
-  const songInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!session?.user?.username) return;
@@ -130,7 +128,6 @@ export default function EditProfilePage() {
             coverImage: json.profile.coverImage ?? "",
             backgroundImage: json.profile.backgroundImage ?? "",
             profileSongUrl: json.profile.profileSongUrl ?? "",
-            profileSongTitle: json.profile.profileSongTitle ?? "",
             cursorEffect: json.profile.cursorEffect ?? "none",
             glitter: json.profile.glitter ?? false,
             // Prefer the new bgEffect; fall back to the legacy glitter boolean.
@@ -160,23 +157,16 @@ export default function EditProfilePage() {
     }
   }
 
-  async function handleSongUpload(file: File) {
-    setError(undefined);
-    setUploadingField("profileSongUrl");
-    try {
-      const url = await uploadFile(file);
-      setForm((f) => ({ ...f, profileSongUrl: url }));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setUploadingField(null);
-    }
-  }
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError(undefined);
+
+    if (form.profileSongUrl && !parseMusicEmbed(form.profileSongUrl)) {
+      setError("Profile song must be a Spotify, YouTube, or SoundCloud link.");
+      return;
+    }
+
+    setSaving(true);
 
     const res = await fetch("/api/profile", {
       method: "PATCH",
@@ -205,7 +195,6 @@ export default function EditProfilePage() {
         coverImage: form.coverImage,
         backgroundImage: form.backgroundImage,
         profileSongUrl: form.profileSongUrl,
-        profileSongTitle: form.profileSongTitle || undefined,
         cursorEffect: form.cursorEffect,
         bgEffect: form.bgEffect,
         // Keep the legacy boolean in sync so older render paths still work.
@@ -381,45 +370,32 @@ export default function EditProfilePage() {
 
         <div>
           <label className="mb-1 block text-sm text-white/60">Profile song</label>
-          <p className="mb-2 text-xs text-white/40">Upload an mp3, or paste a direct audio link. Plays on your profile page.</p>
+          <p className="mb-2 text-xs text-white/40">
+            Paste a Spotify, YouTube, or SoundCloud link. We embed their official player on your profile so the
+            track always streams from a licensed source — see our{" "}
+            <a href="/dmca" target="_blank" rel="noreferrer" className="text-violet-400 hover:underline">
+              copyright policy
+            </a>
+            .
+          </p>
           <input
             className={input}
-            placeholder="Song title (e.g. Crank That - Soulja Boy)"
-            value={form.profileSongTitle}
-            onChange={(e) => setForm((f) => ({ ...f, profileSongTitle: e.target.value }))}
-          />
-          <input
-            className={`${input} mt-2`}
-            placeholder="https://... (direct mp3 link)"
+            placeholder="https://open.spotify.com/track/..."
             value={form.profileSongUrl}
             onChange={(e) => setForm((f) => ({ ...f, profileSongUrl: e.target.value }))}
           />
-          <input
-            ref={songInputRef}
-            type="file"
-            accept="audio/mpeg,audio/ogg,audio/wav"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && handleSongUpload(e.target.files[0])}
-          />
-          <div className="mt-2 flex gap-2">
+          {form.profileSongUrl && !parseMusicEmbed(form.profileSongUrl) && (
+            <p className="mt-1 text-xs text-red-300">Not a recognized Spotify, YouTube, or SoundCloud link.</p>
+          )}
+          {form.profileSongUrl && (
             <button
               type="button"
-              className={uploadButton}
-              disabled={uploadingField === "profileSongUrl"}
-              onClick={() => songInputRef.current?.click()}
+              className={`${uploadButton} mt-2`}
+              onClick={() => setForm((f) => ({ ...f, profileSongUrl: "" }))}
             >
-              {uploadingField === "profileSongUrl" ? "Uploading..." : "Upload mp3"}
+              Remove
             </button>
-            {form.profileSongUrl && (
-              <button
-                type="button"
-                className={uploadButton}
-                onClick={() => setForm((f) => ({ ...f, profileSongUrl: "" }))}
-              >
-                Remove
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
         <div>

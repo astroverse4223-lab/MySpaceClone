@@ -1,66 +1,45 @@
 "use client";
 
-import { usePlayer } from "@/lib/player-store";
+import { parseMusicEmbed } from "@/lib/music-embed";
+import { useEmbedPlayer } from "@/lib/embed-player-store";
 
-const BARS = [
-  { h: 9, dur: 0.7, delay: 0 },
-  { h: 16, dur: 0.9, delay: 0.1 },
-  { h: 7, dur: 0.55, delay: 0.05 },
-  { h: 14, dur: 0.8, delay: 0.15 },
-  { h: 11, dur: 0.65, delay: 0.2 },
-];
+const PROVIDER_LABEL: Record<string, string> = {
+  spotify: "Spotify",
+  youtube: "YouTube",
+  soundcloud: "SoundCloud",
+};
 
-export function ProfileSongPlayer({
-  url,
-  title,
-  subtitle,
-}: {
-  url: string;
-  title?: string | null;
-  subtitle?: string | null;
-}) {
-  const { queue, index, isPlaying, playTrack, toggle } = usePlayer();
-  const current = queue[index] ?? null;
-  const isThis = current?.url === url;
-  const playingThis = isThis && isPlaying;
+export function ProfileSongPlayer({ url, username }: { url: string; username: string }) {
+  const embed = parseMusicEmbed(url);
+  const { embed: active, play, stop } = useEmbedPlayer();
+  // Legacy/invalid links (e.g. a self-hosted file from before embeds were
+  // required) no longer play — only Spotify/YouTube/SoundCloud embeds do.
+  if (!embed) return null;
+
+  const isThis = active?.embedSrc === embed.embedSrc;
 
   function onClick() {
-    if (isThis) toggle();
-    else playTrack({ id: url, url, title: title || "Profile song", subtitle });
+    if (isThis) stop();
+    else play({ ...embed!, label: `@${username}'s profile song` });
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-      <button
-        type="button"
-        onClick={onClick}
-        className="gradient-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition hover:brightness-110"
-        aria-label={playingThis ? "Pause profile song" : "Play profile song"}
-      >
-        {playingThis ? "❙❙" : "▶"}
-      </button>
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left hover:bg-white/10"
+    >
+      <span className="gradient-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white">
+        {isThis ? "❙❙" : "▶"}
+      </span>
       <div className="min-w-0">
         <p className="text-xs uppercase tracking-wide text-white/40">
-          {playingThis ? "Now playing" : "Profile song"}
+          {isThis ? "Now playing" : "Profile song"}
         </p>
-        <p className="truncate text-sm font-medium text-white/90">{title || "Profile song"}</p>
+        <p className="truncate text-sm font-medium text-white/90">
+          Play on {PROVIDER_LABEL[embed.provider]}
+        </p>
       </div>
-      {playingThis && (
-        <div className="ml-auto flex items-end gap-0.5" style={{ height: 16 }}>
-          {BARS.map((b, i) => (
-            <span
-              key={i}
-              className="w-1 rounded-full"
-              style={{
-                height: b.h,
-                transformOrigin: "bottom",
-                background: "linear-gradient(to top, var(--site-accent), var(--site-accent-2))",
-                animation: `eq-bar ${b.dur}s ease-in-out ${b.delay}s infinite`,
-              }}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    </button>
   );
 }

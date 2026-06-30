@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { THEME_IDS } from "@/lib/themes";
 import { FONT_IDS } from "@/lib/themes";
+import { parseMusicEmbed } from "@/lib/music-embed";
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color must be a hex value like #7c3aed");
 
@@ -18,7 +19,16 @@ export const profileUpdateSchema = z.object({
   avatarImage: z.string().max(500).optional(),
   coverImage: z.string().max(500).optional(),
   backgroundImage: z.string().max(500).optional(),
-  profileSongUrl: z.string().max(500).optional(),
+  // Spotify, YouTube, or SoundCloud links only — never a direct/self-hosted
+  // audio file, so we always stream from the provider's own licensed embed
+  // instead of hosting or hotlinking copyrighted audio ourselves.
+  profileSongUrl: z
+    .string()
+    .max(500)
+    .optional()
+    .refine((val) => !val || parseMusicEmbed(val) !== null, {
+      message: "Must be a Spotify, YouTube, or SoundCloud link",
+    }),
   profileSongTitle: z.string().max(100).optional(),
   interests: z.array(z.string().max(30)).max(20).optional(),
   links: z

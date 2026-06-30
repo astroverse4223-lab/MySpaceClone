@@ -12,6 +12,8 @@ import { PwaInstall } from "@/components/pwa-install";
 import { PushNudge } from "@/components/notifications/push-nudge";
 import { AnimatedBackground } from "@/components/animated-background";
 import { PageTransition } from "@/components/page-transition";
+import { Footer } from "@/components/footer";
+import { GlobalSongPlayer } from "@/components/profile/global-song-player";
 
 const baseUrl = process.env.APP_URL ?? "http://localhost:3000";
 const gaId = process.env.NEXT_PUBLIC_GA_ID;
@@ -140,7 +142,9 @@ export default function RootLayout({
           <main className="flex-1">
             <PageTransition>{children}</PageTransition>
           </main>
+          <Footer />
           <MiniPlayer />
+          <GlobalSongPlayer />
           <ChatWidget />
           <RealtimeProvider />
           <Toaster />

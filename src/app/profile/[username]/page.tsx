@@ -260,11 +260,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
 
         {user.profile.profileSongUrl && (
           <div className="mt-6">
-            <ProfileSongPlayer
-              url={user.profile.profileSongUrl}
-              title={user.profile.profileSongTitle}
-              subtitle={`@${user.username}`}
-            />
+            <ProfileSongPlayer url={user.profile.profileSongUrl} username={user.username} />
           </div>
         )}
 

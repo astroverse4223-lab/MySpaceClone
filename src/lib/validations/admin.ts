@@ -29,3 +29,10 @@ export const createReportSchema = z.object({
 export const resolveReportSchema = z.object({
   status: z.enum(["RESOLVED", "DISMISSED"]),
 });
+
+export const resolveDmcaSchema = z.object({
+  status: z.enum(["RESOLVED", "DISMISSED"]),
+  // When resolving a PROFILE_SONG or PLAYLIST_TRACK request, also remove the
+  // matching content instead of just marking the notice handled.
+  takedown: z.boolean().optional(),
+});

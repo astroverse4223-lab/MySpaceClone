@@ -15,6 +15,7 @@ const NAV_SECTIONS: { title: string; items: { href: string; label: string; icon:
       { href: "/admin/content", label: "Content", icon: "📝" },
       { href: "/admin/communities", label: "Communities", icon: "🏛️" },
       { href: "/admin/reports", label: "Reports", icon: "🚩" },
+      { href: "/admin/dmca", label: "DMCA", icon: "©️" },
       { href: "/admin/subscriptions", label: "Subscriptions", icon: "💳" },
     ],
   },
